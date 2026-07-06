@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(\\(Get-Content app.js | Measure-Object -Line\\).Lines; \\(Get-Content index.html | Measure-Object -Line\\).Lines; \\(Get-Content db.js | Measure-Object -Line\\).Lines)",
+      "PowerShell(Select-String -Path app.js -Pattern '^\\(function|const|let|var|async function\\)\\\\s+\\\\w+' | ForEach-Object { \"$\\($_.LineNumber\\): $\\($_.Line.Trim\\(\\)\\)\" } | Select-Object -First 200)"
+    ]
+  }
+}

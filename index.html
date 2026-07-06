@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ thống Quản lý Chi phí Dự án Bất động sản & Xây dựng - AntiGravity PM</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css?v=2.0.0">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- ExcelJS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <img id="sidebar-company-logo" src="" style="display: none; height: 32px; max-width: 90px; object-fit: contain; border-radius: 4px;">
+        <i id="sidebar-company-logo-placeholder" data-lucide="building-2"></i>
+        <h1 id="sidebar-logo-text">AntiGravity PM</h1>
+      </div>
+      
+      <ul class="sidebar-menu">
+        <li class="menu-item active" data-tab="dashboard">
+          <a href="#dashboard"><i data-lucide="layout-dashboard"></i><span>Dashboard Báo cáo</span></a>
+        </li>
+        <li class="menu-item" data-tab="projects">
+          <a href="#projects"><i data-lucide="folders"></i><span>Quản lý Dự án</span></a>
+        </li>
+        <li class="menu-item" data-tab="tmdt">
+          <a href="#tmdt"><i data-lucide="bar-chart-3"></i><span>Tổng mức đầu tư</span></a>
+        </li>
+        <li class="menu-item" data-tab="budgets">
+          <a href="#budgets"><i data-lucide="wallet"></i><span>Ngân sách gói thầu</span></a>
+        </li>
+        <li class="menu-item" data-tab="bids">
+          <a href="#bids"><i data-lucide="gavel"></i><span>Quản lý Đấu thầu</span></a>
+        </li>
+        <li class="menu-item" data-tab="contracts">
+          <a href="#contracts"><i data-lucide="file-signature"></i><span>Quản lý Hợp đồng</span></a>
+        </li>
+        <li class="menu-item" data-tab="variations">
+          <a href="#variations"><i data-lucide="file-plus-2"></i><span>Quản lý phát sinh</span></a>
+        </li>
+        <li class="menu-item" data-tab="payments">
+          <a href="#payments"><i data-lucide="credit-card"></i><span>Quản lý thanh quyết toán</span></a>
+        </li>
+        <li class="menu-item" data-tab="materials">
+          <a href="#materials"><i data-lucide="package"></i><span>Vật tư CĐT cấp</span></a>
+        </li>
+        <li class="menu-item" data-tab="support-deductions">
+          <a href="#support-deductions"><i data-lucide="arrow-down-left"></i><span>Khấu trừ hỗ trợ</span></a>
+        </li>
+        <li class="menu-item" data-tab="penalty-deductions">
+          <a href="#penalty-deductions"><i data-lucide="scale"></i><span>Khấu trừ phạt vi phạm</span></a>
+        </li>
+        <li class="menu-item" data-tab="risks">
+          <a href="#risks"><i data-lucide="alert-triangle"></i><span>Rủi ro chi phí</span></a>
+        </li>
+        <li class="menu-item" data-tab="officers">
+          <a href="#officers"><i data-lucide="users"></i><span>Cán bộ thực hiện</span></a>
+        </li>
+        <li class="menu-item" data-tab="ai">
+          <a href="#ai"><i data-lucide="sparkles"></i><span>Trợ lý AI</span></a>
+        </li>
+      </ul>
+      
+      <div class="sidebar-footer">
+        <p>AntiGravity PM v2.0.0</p>
+        <p>&copy; 2026 Hệ thống Quản lý Chi phí Dự án</p>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      
+      <!-- HEADER -->
+      <header class="app-header">
+        <div class="project-selector">
+          <label for="global-project-select">Chọn dự án báo cáo:</label>
+          <div class="project-select-wrapper">
+            <select id="global-project-select">
+              <!-- Render động danh sách dự án kèm tùy chọn [Tất cả dự án] từ app.js -->
+            </select>
+          </div>
+        </div>
+        
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="btn-reset-mock"><i data-lucide="rotate-ccw"></i>Khôi phục dữ liệu mẫu</button>
+          <button class="btn btn-primary" id="btn-add-new-project" style="display: none;"><i data-lucide="folder-plus"></i>Thêm dự án mới</button>
+          <button class="btn btn-secondary" id="btn-export-csv"><i data-lucide="download"></i>Xuất Excel/CSV</button>
+          <button class="btn btn-secondary" id="btn-backup-json" title="Tải toàn bộ dữ liệu về file JSON để lưu trữ/chuyển máy"><i data-lucide="hard-drive-download"></i>Sao lưu</button>
+          <button class="btn btn-secondary" id="btn-restore-json" title="Phục hồi dữ liệu từ file JSON đã sao lưu"><i data-lucide="hard-drive-upload"></i>Phục hồi</button>
+          <input type="file" id="input-restore-json" accept=".json,application/json" style="display: none;">
+          <button class="btn btn-success" id="btn-print-report"><i data-lucide="printer"></i>In báo cáo</button>
+          
+          <!-- Logo thương hiệu doanh nghiệp góc phải -->
+          <div class="header-branding" id="custom-header-branding" style="display: flex; align-items: center; gap: 8px; margin-left: 15px; border-left: 1px solid var(--border-glass); padding-left: 15px;">
+            <img id="display-company-logo" src="" style="display: none; height: 30px; max-width: 90px; object-fit: contain; border-radius: 4px;">
+            <div id="display-company-logo-placeholder" style="width: 30px; height: 30px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+              <i data-lucide="building-2" style="width: 16px; height: 16px; color: var(--color-primary);"></i>
+            </div>
+            <span id="display-company-name" style="font-weight: 600; font-size: 14px; color: var(--text-main);">AntiGravity PM</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- TAB CONTENT PANELS -->
+      
+      <!-- MODULE 1: DASHBOARD BÁO CÁO -->
+      <section id="tab-dashboard" class="tab-content active">
+        <!-- Dashboard Bento Grid KPI -->
+        <div class="dashboard-grid">
+          <div class="card kpi-card">
+            <div class="kpi-info">
+              <p id="kpi-tmdt-label">Tổng Mức Đầu Tư</p>
+              <h3 id="kpi-tmdt">0 ₫</h3>
+            </div>
+            <div class="kpi-icon kpi-primary">
+              <i data-lucide="landmark"></i>
+            </div>
+          </div>
+          <div class="card kpi-card">
+            <div class="kpi-info">
+              <p>Tổng giá trị hợp đồng</p>
+              <h3 id="kpi-contract">0 ₫</h3>
+            </div>
+            <div class="kpi-icon kpi-info">
+              <i data-lucide="file-text"></i>
+            </div>
+          </div>
+          <div class="card kpi-card">
+            <div class="kpi-info">
+              <p>Thực tế giải ngân</p>
+              <h3 id="kpi-disbursed">0 ₫</h3>
+            </div>
+            <div class="kpi-icon kpi-success">
+              <i data-lucide="badge-dollar-sign"></i>
+            </div>
+          </div>
+          <div class="card kpi-card">
+            <div class="kpi-info">
+              <p>Tổng dự phòng rủi ro</p>
+              <h3 id="kpi-risk">0 ₫</h3>
+            </div>
+            <div class="kpi-icon kpi-warning">
+              <i data-lucide="shield-alert"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================== -->
+        <!-- VIEW 1: DASHBOARD CHI TIẾT TỪNG DỰ ÁN (SINGLE VIEW)-->
+        <!-- ================================================== -->
+        <div id="dashboard-single-project-view">
+          <!-- Charts Grid -->
+          <div class="dashboard-charts-grid">
+            <div class="card chart-card">
+              <div class="card-title">Tương quan Ngân sách - Hợp đồng - Giải ngân</div>
+              <div class="chart-container">
+                <canvas id="chart-comparison"></canvas>
+              </div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-title">Cơ cấu TMĐT được duyệt (Approved)</div>
+              <div class="chart-container">
+                <canvas id="chart-tmdt-structure"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Grid: Alerts & Risks -->
+          <div class="dashboard-bottom-grid">
+            <div class="card">
+              <div class="card-title">Cảnh báo chi phí & Ngân sách</div>
+              <div id="dashboard-alerts-container">
+                <!-- Render động cảnh báo vượt ngân sách, vượt hợp đồng, vượt dự toán -->
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="card-title">Rủi ro chi phí trọng điểm</div>
+              <div class="table-container">
+                <table class="data-table" id="dashboard-risks-table">
+                  <thead>
+                    <tr>
+                      <th>Rủi ro / Sự cố</th>
+                      <th>Mức độ</th>
+                      <th>Dự phòng</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Render động -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================== -->
+        <!-- VIEW 2: DASHBOARD TỔNG HỢP TOÀN BỘ CÁC DỰ ÁN (ALL VIEW)-->
+        <!-- ================================================== -->
+        <div id="dashboard-all-projects-view" style="display: none;">
+          <!-- All View Charts -->
+          <div class="card chart-card" style="height: 400px; margin-bottom: 24px;">
+            <div class="card-title">So sánh Chỉ số Chi phí giữa các Dự án</div>
+            <div class="chart-container">
+              <canvas id="chart-all-projects-comparison"></canvas>
+            </div>
+          </div>
+
+          <!-- All View Table Báo cáo -->
+          <div class="card">
+            <div class="card-title">Báo cáo Tổng hợp tình hình Chi phí toàn bộ dự án</div>
+            <div class="table-container">
+              <table class="data-table" id="dashboard-all-projects-table">
+                <thead>
+                  <tr>
+                    <th>Mã số</th>
+                    <th>Tên Dự án</th>
+                    <th>Địa điểm</th>
+                    <th style="text-align: right;">TMĐT phê duyệt</th>
+                    <th style="text-align: right;">Hợp đồng đã ký</th>
+                    <th style="text-align: right;">Đã giải ngân</th>
+                    <th style="text-align: right;">Tỷ lệ giải ngân</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Render động -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 2: QUẢN LÝ DỰ ÁN VÀ TIẾN ĐỘ -->
+      <section id="tab-projects" class="tab-content">
+        <!-- Phần trên: Info dự án & list dự án -->
+        <div class="project-detail-layout" style="margin-bottom: 24px;">
+          <div class="card">
+            <div class="card-title">Thông tin chung Dự án</div>
+            <div class="info-row">
+              <label>Tên dự án</label>
+              <p id="detail-project-name">-</p>
+            </div>
+            <div class="info-row">
+              <label>Địa điểm xây dựng</label>
+              <p id="detail-project-location">-</p>
+            </div>
+            <div class="info-row">
+              <label>Quy mô dự án</label>
+              <p id="detail-project-scale">-</p>
+            </div>
+            <div class="form-row">
+              <div class="info-row">
+                <label>Ngày khởi công</label>
+                <p id="detail-project-start">-</p>
+              </div>
+              <div class="info-row">
+                <label>Ngày kết thúc (Dự kiến)</label>
+                <p id="detail-project-end">-</p>
+              </div>
+            </div>
+            <div class="info-row">
+              <label>Trạng thái</label>
+              <div style="margin-top: 4px;" id="detail-project-status-badge"></div>
+            </div>
+            <button class="btn btn-primary" id="btn-edit-current-project" style="width: 100%; margin-top: 10px;">
+              <i data-lucide="edit"></i>Chỉnh sửa thông tin dự án
+            </button>
+            <button class="btn btn-danger btn-sm" id="btn-delete-current-project" style="width: 100%; margin-top: 10px;">
+              <i data-lucide="trash-2"></i>Xóa dự án này
+            </button>
+          </div>
+          
+          <div class="card">
+            <div class="card-title">Danh sách Dự án trong hệ thống</div>
+            <div class="table-container">
+              <table class="data-table" id="all-projects-table">
+                <thead>
+                  <tr>
+                    <th>Mã số</th>
+                    <th>Mã viết tắt</th>
+                    <th>Tên Dự án</th>
+                    <th>Địa điểm</th>
+                    <th>Thời gian thực hiện</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Render động -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bảng Tiến độ chi tiết dự án (WBS) duy nhất -->
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-title">
+            Bảng tiến độ chi tiết dự án (WBS)
+          </div>
+          <div class="table-container">
+            <table class="data-table wbs-table" id="wbs-schedule-table">
+              <thead>
+                <tr>
+                  <th>Mục / Hạng mục công việc / Gói thầu</th>
+                  <th style="width: 110px;">KH Bắt đầu</th>
+                  <th style="width: 110px;">KH Kết thúc</th>
+                  <th style="width: 110px;">TT Bắt đầu</th>
+                  <th style="width: 110px;">TT Kết thúc</th>
+                  <th style="width: 130px;">Tỷ lệ hoàn thành</th>
+                  <th style="width: 120px;">Trạng thái</th>
+                  <th style="width: 80px; text-align: center;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Render động các dòng WBS từ app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 3: TỔNG MỨC ĐẦU TƯ (TMĐT) -->
+      <section id="tab-tmdt" class="tab-content">
+        <div class="tmdt-layout" style="grid-template-columns: 1.5fr 1fr;">
+          <div class="card">
+            <div class="card-title">
+              Bảng ma trận Tổng mức đầu tư (TMĐT Matrix)
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary btn-sm" id="btn-edit-tmdt-categories"><i data-lucide="edit-3"></i>Cập nhật Ma trận TMĐT</button>
+              </div>
+            </div>
+            
+            <div class="table-container">
+              <table class="data-table" id="tmdt-matrix-table">
+                <thead>
+                  <tr>
+                    <th>Hạng mục chi phí (Dòng)</th>
+                    <th style="text-align: right;">GĐ nghiên cứu tiền khả thi</th>
+                    <th style="text-align: right;">Phê duyệt chính thức</th>
+                    <th style="text-align: right;">Giá trị đã ký hợp đồng</th>
+                    <th style="text-align: right;">Đã chi thanh quyết toán</th>
+                    <th style="text-align: right;">Chênh lệch (HĐ - P/D)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Render động bảng Ma trận (Matrix) từ app.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="card" style="display: flex; flex-direction: column; justify-content: center;">
+            <div class="card-title">Cơ cấu TMĐT phê duyệt (Approved)</div>
+            <div class="chart-container" style="height: 350px;">
+              <canvas id="chart-tmdt-structure-detail"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 4: NGÂN SÁCH GÓI THẦU -->
+      <section id="tab-budgets" class="tab-content">
+        <div class="card">
+          <div class="card-title">
+            Phân bổ Ngân sách Gói thầu
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button class="btn btn-secondary btn-sm btn-download-template" data-type="budgets" title="Tải file mẫu Excel/CSV"><i data-lucide="file-down"></i>File mẫu</button>
+              <button class="btn btn-secondary btn-sm btn-import-trigger" data-target="import-file-budgets" title="Nhập dữ liệu từ file CSV"><i data-lucide="upload"></i>Import</button>
+              <input type="file" id="import-file-budgets" class="csv-import-input" data-type="budgets" accept=".csv" style="display: none;">
+              <button class="btn btn-primary btn-sm" id="btn-add-budget"><i data-lucide="plus"></i>Thêm Ngân sách gói thầu</button>
+            </div>
+          </div>
+          <div class="alert-box">
+            <i data-lucide="info"></i>
+            <span>Ngân sách các gói thầu là hạn mức tối đa được duyệt từ các cấu phần TMĐT (Xây dựng, Thiết bị, Tư vấn...). Tổng ngân sách gói thầu thuộc một cấu phần không nên vượt quá TMĐT được duyệt của cấu phần đó để đảm bảo kiểm soát ngân sách an toàn.</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="budgets-table">
+              <thead>
+                <tr>
+                  <th>Mã hạn mức</th>
+                  <th class="col-project" style="display: none;">Dự án</th>
+                  <th>Tên Gói thầu / Nội dung phân bổ</th>
+                  <th>Nhóm chi phí TMĐT</th>
+                  <th style="text-align: right;">Ngân sách được duyệt</th>
+                  <th style="text-align: right;">Đã ký hợp đồng</th>
+                  <th style="text-align: right;">Đã chi thanh/quyết toán</th>
+                  <th style="text-align: right;">Hạn mức còn lại</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Render động -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 5: QUẢN LÝ ĐẤU THẦU -->
+      <section id="tab-bids" class="tab-content">
+        <div class="card">
+          <div class="card-title">
+            Kế hoạch lựa chọn nhà thầu & Kết quả đấu thầu
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button class="btn btn-secondary btn-sm btn-download-template" data-type="bids" title="Tải file mẫu Excel/CSV"><i data-lucide="file-down"></i>File mẫu</button>
+              <button class="btn btn-secondary btn-sm btn-import-trigger" data-target="import-file-bids" title="Nhập dữ liệu từ file CSV"><i data-lucide="upload"></i>Import</button>
+              <input type="file" id="import-file-bids" class="csv-import-input" data-type="bids" accept=".csv" style="display: none;">
+              <button class="btn btn-primary btn-sm" id="btn-add-bid"><i data-lucide="plus"></i>Thêm Kế hoạch đấu thầu</button>
+            </div>
+          </div>
+          <div class="table-container" style="max-width: 100%; overflow-x: auto;">
+            <table class="data-table" id="bids-table" style="min-width: 1400px;">
+              <thead>
+                <tr>
+                  <th>Mã gói thầu</th>
+                  <th class="col-project" style="display: none;">Dự án</th>
+                  <th>Tên Gói thầu</th>
+                  <th>Hạn mức Ngân sách</th>
+                  <th>KH Bắt đầu</th>
+                  <th>KH Kết thúc</th>
+                  <th>TT Bắt đầu</th>
+                  <th>TT Kết thúc</th>
+                  <th>Số ngày chậm</th>
+                  <th>Cán bộ thực hiện</th>
+                  <th style="text-align: right;">Giá gói thầu dự toán</th>
+                  <th style="text-align: right;">Giá trúng thầu thực tế</th>
+                  <th>Nhà thầu trúng thầu</th>
+                  <th>Chênh lệch thầu</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Render động -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 6: QUẢN LÝ HỢP ĐỒNG -->
+      <section id="tab-contracts" class="tab-content">
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="card-title">
+            Danh sách Hợp đồng Xây dựng / Mua sắm (Hợp đồng gốc)
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button class="btn btn-secondary btn-sm btn-download-template" data-type="contracts" title="Tải file mẫu Excel/CSV"><i data-lucide="file-down"></i>File mẫu</button>
+              <button class="btn btn-secondary btn-sm btn-import-trigger" data-target="import-file-contracts" title="Nhập dữ liệu từ file CSV"><i data-lucide="upload"></i>Import</button>
+              <input type="file" id="import-file-contracts" class="csv-import-input" data-type="contracts" accept=".csv" style="display: none;">
+              <button class="btn btn-primary btn-sm" id="btn-add-contract"><i data-lucide="plus"></i>Đăng ký Hợp đồng</button>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="contracts-table">
+              <thead>
+                <tr>
+                  <th>Số hợp đồng</th>
+                  <th class="col-project" style="display: none;">Dự án</th>
+                  <th>Tên Hợp đồng</th>
+                  <th>Pháp nhân ký kết</th>
+                  <th>Đối tác / Nhà thầu</th>
+                  <th>Loại hợp đồng</th>
+                  <th>Ngày hoàn thành thi công</th>
+                  <th style="text-align: right;">Giá trị gốc (ký kết)</th>
+                  <th style="text-align: right;">Giá trị PLHĐ</th>
+                  <th style="text-align: right;">Tổng giá trị HĐ</th>
+                  <th style="text-align: right;">Thực tế giải ngân</th>
+                  <th style="text-align: right;">Còn lại cần giải ngân</th>
+                  <th style="text-align: right;">Tỷ lệ giải ngân</th>
+                  <th>Ngày ký kết</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Render động -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            Danh sách Phụ lục Hợp đồng (PLHĐ)
+            <button class="btn btn-primary btn-sm" id="btn-add-addendum"><i data-lucide="plus-square"></i>Lập Phụ lục Hợp đồng</button>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="addendums-table">
+              <thead>
+                <tr>
+                  <th>Số PLHĐ</th>
+                  <th class="col-project" style="display: none;">Dự án</th>
+                  <th>Tên Phụ lục hợp đồng</th>
+                  <th>Thuộc Hợp đồng chính</th>
+                  <th style="text-align: right;">Giá trị Phụ lục</th>
+                  <th>Các Phát sinh gom vào</th>
+                  <th>Ngày ký phụ lục</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Render động từ app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 6b: QUẢN LÝ PHÁT SINH -->
+      <section id="tab-variations" class="tab-content">
+        <div class="card">
+          <div class="card-title">
+            Nhật ký Đăng ký & Phê duyệt chi phí phát sinh
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button class="btn btn-secondary btn-sm btn-download-template" data-type="variations" title="Tải file mẫu Excel/CSV"><i data-lucide="file-down"></i>File mẫu</button>
+              <button class="btn btn-secondary btn-sm btn-import-trigger" data-target="import-file-variations" title="Nhập dữ liệu từ file CSV"><i data-lucide="upload"></i>Import</button>
+              <input type="file" id="import-file-variations" class="csv-import-input" data-type="variations" accept=".csv" style="display: none;">
+              <button class="btn btn-primary btn-sm" id="btn-add-variation"><i data-lucide="plus"></i>Đăng ký Phát sinh</button>
+            </div>
+          </div>
+          <div class="alert-box">
+            <i data-lucide="help-circle"></i>
+            <span>Nhà thầu/Ban QLDA đăng ký các hạng mục phát sinh ngoài hợp đồng gốc tại đây. Các phát sinh sau khi được **Duyệt giá** (Trạng thái: Đã duyệt) sẽ khả dụng ở tab Hợp đồng để gom vào các Phụ lục Hợp đồng (PLHĐ) tương ứng nhằm chính thức tăng/giảm giá trị hợp đồng tổng.</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="variations-table">
+              <thead>
+                <tr>
+                  <th>Mã gói thầu/Mã hợp đồng</th>
+                  <th class="col-project" style="display: none;">Dự án</th>
+                  <th>Nội dung phát sinh</th>
+                  <th>Thuộc Hợp đồng</th>
+                  <th>Đối tác / Nhà thầu</th>
+                  <th>Ngày nhận HS</th>
+                  <th>Ngày hoàn thành</th>
+                  <th>Cán bộ thực hiện</th>
+                  <th>Số ngày chậm</th>
+                  <th style="text-align: right;">Giá trị đề xuất</th>
+                  <th style="text-align: right;">Giá trị phê duyệt</th>
+                  <th>Phụ lục liên kết</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Render động từ app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 7: QUẢN LÝ TẠM ỨNG, THANH TOÁN, QUYẾT TOÁN -->
+      <section id="tab-payments" class="tab-content">
+        <!-- Bảng điều khiển Chọn hợp đồng & Cấu hình SLA xử lý hồ sơ -->
+        <div class="project-detail-layout" style="grid-template-columns: 1fr 1.2fr; gap: 20px; margin-bottom: 24px;">
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-title">Hợp đồng theo dõi thanh toán</div>
+            <div class="form-group" style="margin-bottom: 0; margin-top: 10px;">
+              <label for="payment-contract-select">Chọn Hợp đồng cần thực hiện:</label>
+              <div class="project-select-wrapper">
+                <select id="payment-contract-select">
+                  <!-- Render động danh sách hợp đồng của dự án -->
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-title">Cấu hình định mức xử lý hồ sơ (SLA)</div>
+            <div style="display: flex; gap: 10px; margin-top: 10px; align-items: flex-end;">
+              <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                <label for="sla-advance" style="font-size: 11px;">1. Hồ sơ Tạm ứng (Ngày)</label>
+                <input type="number" id="sla-advance" min="0" value="1" style="padding: 6px 10px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                <label for="sla-payment" style="font-size: 11px;">2. Hồ sơ Thanh toán (Ngày)</label>
+                <input type="number" id="sla-payment" min="0" value="7" style="padding: 6px 10px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                <label for="sla-settlement" style="font-size: 11px;">3. Hồ sơ Quyết toán (Ngày)</label>
+                <input type="number" id="sla-settlement" min="0" value="45" style="padding: 6px 10px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                <label for="sla-variation" style="font-size: 11px;">4. Hồ sơ Phát sinh (Ngày)</label>
+                <input type="number" id="sla-variation" min="0" value="7" style="padding: 6px 10px;">
+              </div>
+              <button class="btn btn-secondary" id="btn-save-sla" style="padding: 8px 12px; height: 36px;" title="Lưu cấu hình định mức"><i data-lucide="save"></i>Lưu</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            Nhật ký Giải ngân, Thanh toán và Quyết toán
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button class="btn btn-secondary btn-sm btn-download-template" data-type="payments" title="Tải file mẫu Excel/CSV"><i data-lucide="file-down"></i>File mẫu</button>
+              <button class="btn btn-secondary btn-sm btn-import-trigger" data-target="import-file-payments" title="Nhập dữ liệu từ file CSV"><i data-lucide="upload"></i>Import</button>
+              <input type="file" id="import-file-payments" class="csv-import-input" data-type="payments" accept=".csv" style="display: none;">
+              <button class="btn btn-primary btn-sm" id="btn-add-payment"><i data-lucide="plus"></i>Đề nghị Thanh toán</button>
+            </div>
+          </div>
+          
+          <div class="dashboard-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 20px;">
+            <div class="stage-card">
+              <div class="stage-name">Tổng giá trị hợp đồng (gồm PLHĐ)</div>
+              <div class="stage-value" id="pay-summary-value" style="color: var(--text-main)">0 ₫</div>
+            </div>
+            <div class="stage-card">
+              <div class="stage-name">Lũy kế thực tế đã giải ngân (Paid)</div>
+              <div class="stage-value" id="pay-summary-paid" style="color: var(--color-success)">0 ₫</div>
+            </div>
+            <div class="stage-card">
+              <div class="stage-name">Giá trị còn lại cần giải ngân</div>
+              <div class="stage-value" id="pay-summary-remain" style="color: var(--color-warning)">0 ₫</div>
+            </div>
+          </div>
+
+          <div class="table-container" style="max-width: 100%; overflow-x: auto;">
+            <table class="data-table" id="payments-table" style="min-width: 1800px;">
+              <thead>
+                <tr>
+                  <th style="min-width: 180px;">Đợt thanh toán</th>
+                  <th class="col-project" style="display: none;">Dự án</th>
+                  <th>Loại</th>
+                  <th>Mã gói thầu/HĐ</th>
+                  <th style="min-width: 180px;">Pháp nhân ký hợp đồng</th>
+                  <th>Ngày nhận HS</th>
+                  <th>Ngày hoàn thành</th>
+                  <th>Ngày chuyển KT</th>
+                  <th>Cán bộ thực hiện</th>
+                  <th>Số ngày chậm</th>
+                  <th style="text-align: right;">Giá trị đề nghị thanh toán</th>
+                  <th style="text-align: right;">Giá trị hoàn thành</th>
+                  <th style="text-align: right;">Khấu trừ TƯ/GĐ</th>
+                  <th style="text-align: right;">Khấu trừ vật tư</th>
+                  <th style="text-align: right;">Khấu trừ điện</th>
+                  <th style="text-align: right;">Khấu trừ nước</th>
+                  <th style="text-align: right;">Giá trị phạt</th>
+                  <th style="text-align: right;">Khấu trừ chéo</th>
+                  <th style="text-align: right;">Khấu trừ khác</th>
+                  <th style="text-align: right;">Giữ lại bảo hành</th>
+                                    <th>Ngày chi tiền</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Render động -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE: QUẢN LÝ VẬT TƯ CĐT CẤP -->
+      <section id="tab-materials" class="tab-content">
+        <div class="card">
+          <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Nhật ký Vật tư Chủ đầu tư cấp</span>
+            <div class="header-actions" id="materials-actions">
+              <button class="btn btn-secondary" id="btn-template-materials"><i data-lucide="download"></i>File mẫu</button>
+              <button class="btn btn-secondary" id="btn-import-materials"><i data-lucide="upload"></i>Import Excel</button>
+              <input type="file" id="file-import-materials" style="display: none;" accept=".xlsx">
+              <button class="btn btn-primary" id="btn-add-material"><i data-lucide="plus"></i>Đăng ký Vật tư</button>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="table-materials">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th class="col-project" style="display: none;">Dự án</th>
+                  <th>Nhà cung cấp</th>
+                  <th>Hợp đồng cung cấp</th>
+                  <th>Tên vật tư</th>
+                  <th>Đơn vị</th>
+                  <th style="text-align: right;">SL theo HĐ</th>
+                  <th style="text-align: right;">SL nhập</th>
+                  <th>Ngày nhập</th>
+                  <th>Số Phiếu/BB</th>
+                  <th style="text-align: right;">SL giao nhà thầu</th>
+                  <th>Ngày giao</th>
+                  <th>Nhà thầu nhận</th>
+                  <th style="text-align: right;">Nhà thầu trả</th>
+                  <th style="text-align: right; font-weight: bold;">Tồn kho</th>
+                                    <th>Đính kèm</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="materials-list">
+                <!-- Render động -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE: QUẢN LÝ KHẤU TRỪ HỖ TRỢ -->
+      <section id="tab-support-deductions" class="tab-content">
+        <div class="card">
+          <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Danh sách Khấu trừ Hỗ trợ / Phục vụ</span>
+            <div class="header-actions" id="support-deductions-actions">
+              <button class="btn btn-secondary" id="btn-template-support-deductions"><i data-lucide="download"></i>File mẫu</button>
+              <button class="btn btn-secondary" id="btn-import-support-deductions"><i data-lucide="upload"></i>Import Excel</button>
+              <input type="file" id="file-import-support-deductions" style="display: none;" accept=".xlsx">
+              <button class="btn btn-primary" id="btn-add-support-deduction"><i data-lucide="plus"></i>Đăng ký Khấu trừ</button>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="table-support-deductions">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th class="col-project" style="display: none;">Dự án</th>
+                  <th>Đơn vị bị khấu trừ (Nhà thầu A)</th>
+                  <th>Đơn vị thụ hưởng (Nhà thầu B)</th>
+                  <th>Hạng mục</th>
+                  <th>Nội dung khấu trừ</th>
+                  <th style="text-align: right;">Giá trị (Trước thuế)</th>
+                  <th style="text-align: right;">Giá trị (Sau thuế)</th>
+                  <th>HĐ bị khấu trừ (A)</th>
+                  <th>HĐ thanh toán (B)</th>
+                  <th>Đợt thanh toán khấu trừ</th>
+                  <th>Quyết toán</th>
+                  <th>Tình trạng</th>
+                  <th>Đính kèm</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="support-deductions-list">
+                <!-- Render động -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE: QUẢN LÝ KHẤU TRỪ PHẠT VI PHẠM -->
+      <section id="tab-penalty-deductions" class="tab-content">
+        <div class="card">
+          <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Nhật ký Phạt vi phạm hợp đồng</span>
+            <div class="header-actions" id="penalty-deductions-actions">
+              <button class="btn btn-secondary" id="btn-template-penalty-deductions"><i data-lucide="download"></i>File mẫu</button>
+              <button class="btn btn-secondary" id="btn-import-penalty-deductions"><i data-lucide="upload"></i>Import Excel</button>
+              <input type="file" id="file-import-penalty-deductions" style="display: none;" accept=".xlsx">
+              <button class="btn btn-primary" id="btn-add-penalty-deduction"><i data-lucide="plus"></i>Đăng ký Phạt</button>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="table-penalty-deductions">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th class="col-project" style="display: none;">Dự án</th>
+                  <th>Số văn bản (CV)</th>
+                  <th>Ngày văn bản</th>
+                  <th>Nội dung văn bản</th>
+                  <th>Tên khoản phạt</th>
+                  <th>Hợp đồng áp dụng</th>
+                  <th style="text-align: right;">Giá trị phạt</th>
+                  <th>Đợt thanh toán áp dụng</th>
+                  <th>Quyết toán</th>
+                  <th>Tình trạng</th>
+                  <th>Đính kèm</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="penalty-deductions-list">
+                <!-- Render động -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 8: QUẢN LÝ RỦI RO CHI PHÍ -->
+      <section id="tab-risks" class="tab-content">
+        <div class="card">
+          <div class="card-title">
+            Quản lý và Dự phòng Rủi ro Chi phí
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button class="btn btn-secondary btn-sm btn-download-template" data-type="risks" title="Tải file mẫu Excel/CSV"><i data-lucide="file-down"></i>File mẫu</button>
+              <button class="btn btn-secondary btn-sm btn-import-trigger" data-target="import-file-risks" title="Nhập dữ liệu từ file CSV"><i data-lucide="upload"></i>Import</button>
+              <input type="file" id="import-file-risks" class="csv-import-input" data-type="risks" accept=".csv" style="display: none;">
+              <button class="btn btn-info btn-sm" id="btn-ai-analyze-risks" title="Dùng AI phân tích và dự phòng rủi ro dự án"><i data-lucide="sparkles"></i>Phân tích bằng AI</button>
+              <button class="btn btn-primary btn-sm" id="btn-add-risk"><i data-lucide="plus"></i>Khai báo Rủi ro</button>
+            </div>
+          </div>
+          <div class="alert-box">
+            <i data-lucide="alert-circle"></i>
+            <span>Bao gồm các rủi ro kỹ thuật, pháp lý, thị trường hoặc thời tiết có khả năng làm phát sinh chi phí ngoài dự kiến. Chi phí dự phòng rủi ro sẽ giúp Lãnh đạo dự án chuẩn bị sẵn nguồn lực tài chính dự phòng tương ứng.</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="risks-table">
+              <thead>
+                <tr>
+                  <th>Mô tả Rủi ro / Sự cố tiềm ẩn</th>
+                  <th>Khả năng xảy ra</th>
+                  <th>Mức độ ảnh hưởng</th>
+                  <th style="text-align: right;">Dự phòng tài chính đề xuất</th>
+                  <th>Biện pháp giảm thiểu</th>
+                  <th>Trạng thái theo dõi</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Render động -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <!-- MODULE 9: QUẢN LÝ DANH SÁCH CÁN BỘ -->
+      <section id="tab-officers" class="tab-content">
+        <!-- Cấu hình thương hiệu doanh nghiệp -->
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-title">
+            <i data-lucide="shield" style="color: var(--color-primary); width: 18px; margin-right: 6px;"></i>
+            Cấu hình Thương hiệu Doanh nghiệp
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end;">
+            <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+              <label for="branding-company-name">Tên tập đoàn/công ty sử dụng *</label>
+              <input type="text" id="branding-company-name" placeholder="Ví dụ: Tập đoàn Bất động sản Panorama" style="width: 100%;">
+            </div>
+            <div class="form-group" style="width: 280px; margin-bottom: 0;">
+              <label for="branding-logo-file">Tải lên Logo công ty (Dưới 500KB)</label>
+              <input type="file" id="branding-logo-file" accept="image/*" style="width: 100%; font-size: 12px; padding: 6px;">
+              <img id="branding-logo-preview" src="" style="display: none; margin-top: 8px; height: 48px; max-width: 150px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border-glass);">
+            </div>
+            <button class="btn btn-primary" id="btn-save-branding" style="height: 40px;"><i data-lucide="save"></i>Lưu cấu hình</button>
+          </div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 10px;">
+            💡 Thông tin thương hiệu này sẽ được áp dụng đồng bộ để chạy cho toàn bộ các tab hiển thị trên hệ thống.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            Danh sách Cán bộ phụ trách dự án (Nhân sự Ban QLDA)
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button class="btn btn-secondary btn-sm btn-download-template" data-type="officers" title="Tải file mẫu Excel/CSV"><i data-lucide="file-down"></i>File mẫu</button>
+              <button class="btn btn-secondary btn-sm btn-import-trigger" data-target="import-file-officers" title="Nhập dữ liệu từ file CSV"><i data-lucide="upload"></i>Import</button>
+              <input type="file" id="import-file-officers" class="csv-import-input" data-type="officers" accept=".csv" style="display: none;">
+              <button class="btn btn-primary btn-sm" id="btn-add-officer"><i data-lucide="plus"></i>Thêm cán bộ mới</button>
+            </div>
+          </div>
+          <div class="alert-box" style="background: rgba(99, 102, 241, 0.05); border-color: rgba(99, 102, 241, 0.2); color: #a5b4fc;">
+            <i data-lucide="info"></i>
+            <span>Khai báo danh sách cán bộ Ban Quản lý dự án để gán quyền thực hiện và quản lý tiến độ cho các Gói thầu, Hồ sơ thanh toán, và các Phát sinh chi phí.</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="officers-table">
+              <thead>
+                <tr>
+                  <th>Họ và tên</th>
+                  <th>Chức vụ</th>
+                  <th style="text-align: center;">Gói thầu<br><small>(Đang làm / Chậm)</small></th>
+                  <th style="text-align: center;">Hợp đồng<br><small>(Đang làm / Chậm)</small></th>
+                  <th style="text-align: center;">Thanh toán<br><small>(Đang làm / Chậm)</small></th>
+                  <th style="text-align: center;">Phát sinh<br><small>(Đang làm / Chậm)</small></th>
+                  <th style="text-align: center;">Tổng hợp<br><small>(Đang làm / Chậm)</small></th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Render động từ app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-title">
+            Chi tiết công việc thực hiện
+            <div style="display: flex; gap: 8px; align-items: center; font-size: 13px; font-weight: 500;">
+              <select id="filter-officer-task-person" class="form-control" style="width: 180px; height: 32px; padding: 0 10px; font-size: 13px;">
+                <option value="all">Tất cả cán bộ</option>
+              </select>
+              <select id="filter-officer-task-type" class="form-control" style="width: 150px; height: 32px; padding: 0 10px; font-size: 13px;">
+                <option value="all">Tất cả loại công việc</option>
+                <option value="Bidding">Gói thầu</option>
+                <option value="Contract">Hợp đồng</option>
+                <option value="Payment">Thanh toán</option>
+                <option value="Variation">Phát sinh</option>
+              </select>
+              <select id="filter-officer-task-status" class="form-control" style="width: 150px; height: 32px; padding: 0 10px; font-size: 13px;">
+                <option value="all">Tất cả tình trạng</option>
+                <option value="pending">Đang thực hiện</option>
+                <option value="completed">Đã xong</option>
+                <option value="not_started">Chưa làm</option>
+                <option value="delayed">Chậm tiến độ</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" id="btn-export-officer-tasks" title="Xuất báo cáo Excel"><i data-lucide="download"></i>Xuất báo cáo</button>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="officer-tasks-table">
+              <thead>
+                <tr>
+                  <th>Họ và tên</th>
+                  <th>Công việc đang thực hiện</th>
+                  <th>Phân loại</th>
+                  <th style="text-align: center;">Ngày bắt đầu</th>
+                  <th style="text-align: center;">Ngày kết thúc</th>
+                  <th style="text-align: center;">Tình trạng</th>
+                  <th style="text-align: center;">Số ngày chậm</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Render động từ app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- MODULE 10: TRỢ LÝ AI HỖ TRỢ THÔNG TIN -->
+      <section id="tab-ai" class="tab-content">
+        <div class="ai-assistant-layout">
+          <div class="api-config-card" id="ai-config-card">
+            <div style="font-weight: 600; font-size: 15px; margin-bottom: 12px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="key" style="color: var(--color-primary); width: 18px;"></i>Cấu hình API Key
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label for="ai-provider-select">Chọn Nhà cung cấp AI:</label>
+              <select id="ai-provider-select" style="width: 100%; font-size: 13px; padding: 10px; border-radius: 6px; background: var(--bg-input); border: 1px solid var(--border-glass); color: var(--text-main); font-family: var(--font-primary);">
+                <option value="gemini">Google Gemini (Khuyên dùng)</option>
+                <option value="groq">Groq (Nhanh nhất & Miễn phí)</option>
+                <option value="openrouter">OpenRouter (Nhiều model Miễn phí)</option>
+                <option value="mistral">Mistral AI (Mã nguồn mở Pháp)</option>
+              </select>
+            </div>
+
+            <div id="ai-provider-info" style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px; line-height: 1.5; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border: 1px solid var(--border-glass);">
+               <!-- Sẽ được điền tự động bởi JS dựa trên nhà cung cấp được chọn -->
+            </div>
+
+            <div class="form-group">
+              <label for="ai-api-key" id="ai-api-key-label">API Key:</label>
+              <input type="password" id="ai-api-key" placeholder="...">
+            </div>
+            
+            <div class="form-group" style="margin-top: 10px; margin-bottom: 15px;">
+              <label for="ai-model-select">Chọn mô hình:</label>
+              <select id="ai-model-select" style="width: 100%; font-size: 13px; padding: 10px; border-radius: 6px; background: var(--bg-input); border: 1px solid var(--border-glass); color: var(--text-main); font-family: var(--font-primary);">
+              </select>
+            </div>
+            
+            <button class="btn btn-primary btn-sm" id="btn-save-api-key" style="width: 100%; justify-content: center; margin-top: 5px;">
+              <i data-lucide="save"></i>Lưu cấu hình
+            </button>
+          </div>
+          
+          <div id="ai-config-success" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px; flex-shrink: 0;">
+            <div id="ai-config-success-msg" style="color: #34d399; font-weight: 600; font-size: 14px; margin-bottom: 10px;">
+              ✅ Đã nhận cấu hình API Key
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btn-edit-api-config" style="width: 100%; justify-content: center;">
+              <i data-lucide="refresh-cw"></i>Đổi API Key hoặc Nhà cung cấp khác
+            </button>
+          </div>
+          
+          <div class="ai-chat-card">
+            <div class="card-title" style="margin-bottom: 15px; border-bottom: 1px solid var(--border-glass); padding-bottom: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <i data-lucide="sparkles" style="color: var(--color-primary)"></i>
+                <span>Trợ lý Phân tích Chi phí & Tiến độ Dự án (AI)</span>
+              </div>
+              <span id="ai-status-badge" class="badge badge-success">Sẵn sàng</span>
+            </div>
+            
+            <div class="chat-history" id="chat-history-container">
+              <div class="chat-message ai">
+                Xin chào! Tôi là Trợ lý AI chuyên trách về quản lý chi phí dự án. Tôi đã nạp toàn bộ dữ liệu dự án của bạn (Tổng mức đầu tư, Ngân sách gói thầu, Đấu thầu, Hợp đồng, Phát sinh, Thanh quyết toán, Rủi ro). 
+                <br><br>
+                Bạn có thể hỏi tôi bất kỳ câu hỏi nào như:
+                <ul style="margin-left: 20px; margin-top: 5px;">
+                  <li>Hãy tóm tắt tình hình tài chính hiện tại của dự án?</li>
+                  <li>Có hạng mục hay gói thầu nào đang bị chậm tiến độ không?</li>
+                  <li>Phân tích các rủi ro chi phí lớn nhất của dự án và dự phòng?</li>
+                  <li>Hợp đồng Delta đã thanh toán được bao nhiêu phần trăm?</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="chat-input-wrapper">
+              <input type="text" id="ai-chat-input" placeholder="Nhập câu hỏi của bạn tại đây...">
+              <button class="btn-send" id="btn-send-chat" title="Gửi câu hỏi">
+                <i data-lucide="send" style="width: 18px; height: 18px;"></i>
+              </button>
+            </div>
+            
+            <div class="suggested-questions">
+              <button class="suggested-btn" data-question="Hãy tóm tắt báo cáo nhanh tình hình chi phí dự án?">📊 Báo cáo nhanh chi phí</button>
+              <button class="suggested-btn" data-question="Phân tích tình hình xử lý hồ sơ thanh toán và các cán bộ bị trễ SLA?">⏱️ Phân tích SLA trễ</button>
+              <button class="suggested-btn" data-question="Tổng hợp các phát sinh chi phí đã duyệt và các PLHĐ tương ứng?">➕ Báo cáo phát sinh & PLHĐ</button>
+              <button class="suggested-btn btn-ai-risk-analysis" style="background: var(--color-warning); color: var(--bg-card); font-weight: 600; border: none;" data-question="Hãy tổng hợp toàn bộ thông tin dự án hiện tại (Ngân sách, Đấu thầu, Hợp đồng, Phụ lục, Phát sinh, Thanh quyết toán) và thực hiện phân tích rủi ro chi tiết (các rủi ro vượt ngân sách, chậm tiến độ, rủi ro pháp lý, rủi ro thanh toán). Sau đó lập bảng rủi ro gồm các cột: Mô tả rủi ro, Khả năng xảy ra, Mức độ ảnh hưởng, Dự phòng tài chính đề xuất, Biện pháp giảm thiểu.">⚠️ Phân tích Rủi ro Chi phí bằng AI</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL DIALOGS FOR CREATING/EDITING DATA    -->
+  <!-- ========================================== -->
+
+  <!-- 1. MODAL DỰ ÁN (PROJECT) -->
+  <div class="modal-overlay" id="modal-project">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-project-title">Thêm Dự án mới</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-project">
+          <input type="hidden" id="form-project-id">
+          <div class="form-group">
+            <label for="form-project-name">Tên dự án *</label>
+            <input type="text" id="form-project-name" required placeholder="Ví dụ: Tòa nhà hỗn hợp Grand Plaza">
+          </div>
+          <div class="form-group">
+            <label for="form-project-code">Mã viết tắt dự án *</label>
+            <input type="text" id="form-project-code" required placeholder="Ví dụ: PN, GV, GP..." style="text-transform: uppercase;">
+            <span style="font-size: 11px; color: #888; display: block; margin-top: 4px; line-height: 1.4;">
+              💡 <b>Quy ước mã gói thầu sau này:</b> [Mã dự án]-[Mã gói thầu]-[Số thứ tự]. Ví dụ: Dự án Panorama viết tắt là <b>PN</b>, mã Kết cấu là <b>KC</b>, gói thầu 1 -> Mã gói thầu: <b>PN-KC-01</b>.
+            </span>
+          </div>
+          <div class="form-group">
+            <label for="form-project-location">Địa điểm xây dựng *</label>
+            <input type="text" id="form-project-location" required placeholder="Ví dụ: Quận 7, TP.HCM">
+          </div>
+          <div class="form-group">
+            <label for="form-project-scale">Quy mô đầu tư *</label>
+            <textarea id="form-project-scale" rows="2" required placeholder="Quy mô diện tích, số tầng, số căn hộ..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-project-start">Ngày khởi công</label>
+              <input type="date" id="form-project-start">
+            </div>
+            <div class="form-group">
+              <label for="form-project-end">Ngày kết thúc dự kiến</label>
+              <input type="date" id="form-project-end">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="form-project-status">Trạng thái phát triển</label>
+            <select id="form-project-status">
+              <option value="planned">Giai đoạn chuẩn bị (Planned)</option>
+              <option value="in-progress">Đang thi công (In Progress)</option>
+              <option value="completed">Đã bàn giao đưa vào sử dụng (Completed)</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-project">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. MODAL MA TRẬN TMĐT (TMDT MATRIX CATEGORIES) -->
+  <div class="modal-overlay" id="modal-tmdt-categories">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>Cập nhật hạng mục Chi phí TMĐT</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-tmdt-categories">
+          <div class="form-group">
+            <label for="form-tmdt-stage-select">Giai đoạn Tổng mức đầu tư cần cập nhật *</label>
+            <select id="form-tmdt-stage-select" required>
+              <option value="design">Giai đoạn Thiết kế cơ sở</option>
+              <option value="approved">Giai đoạn Phê duyệt chính thức</option>
+              <option value="adjusted">Giai đoạn Điều chỉnh thực tế</option>
+            </select>
+          </div>
+          
+          <hr style="border: 0; border-top: 1px solid var(--border-glass); margin: 15px 0;">
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Điền chi phí tương ứng của các hạng mục thuộc giai đoạn đang chọn:</p>
+          <p id="tmdt-lock-notice" style="font-size: 12px; color: var(--color-warning); background: rgba(245, 158, 11, 0.08); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.2); margin-bottom: 15px; display: none; line-height: 1.4;">
+            Lưu ý: Các hạng mục 1-6 được liên kết tự động từ Ngân sách & Hợp đồng, không thể sửa trực tiếp ở giai đoạn này (chỉ cho phép sửa Chi phí Dự phòng).
+          </p>
+          
+          <div class="tmdt-input-grid">
+            <div class="form-group">
+              <label for="form-cat-gpmb">1. Bồi thường, hỗ trợ & GPMB (VNĐ)</label>
+              <input type="text" id="form-cat-gpmb" min="0" class="tmdt-cat-input format-number">
+            </div>
+            <div class="form-group">
+              <label for="form-cat-construction">2. Chi phí Xây dựng (VNĐ)</label>
+              <input type="text" id="form-cat-construction" min="0" class="tmdt-cat-input format-number">
+            </div>
+            <div class="form-group">
+              <label for="form-cat-equipment">3. Chi phí Thiết bị (VNĐ)</label>
+              <input type="text" id="form-cat-equipment" min="0" class="tmdt-cat-input format-number">
+            </div>
+            <div class="form-group">
+              <label for="form-cat-qlda">4. Chi phí Quản lý dự án (VNĐ)</label>
+              <input type="text" id="form-cat-qlda" min="0" class="tmdt-cat-input format-number">
+            </div>
+            <div class="form-group">
+              <label for="form-cat-consulting">5. Chi phí Tư vấn xây dựng (VNĐ)</label>
+              <input type="text" id="form-cat-consulting" min="0" class="tmdt-cat-input format-number">
+            </div>
+            <div class="form-group">
+              <label for="form-cat-other">6. Chi phí Khác (VNĐ)</label>
+              <input type="text" id="form-cat-other" min="0" class="tmdt-cat-input format-number">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label for="form-cat-contingency">7. Chi phí Dự phòng (VNĐ)</label>
+              <input type="text" id="form-cat-contingency" min="0" class="tmdt-cat-input format-number">
+            </div>
+          </div>
+          <div style="margin-top: 15px; text-align: right; font-weight: 600; font-size: 15px;">
+            Tổng cộng giai đoạn: <span id="modal-tmdt-cat-total" style="color: var(--color-info);">0 ₫</span>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-tmdt-categories">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. MODAL NGÂN SÁCH GÓI THẦU (BUDGET) -->
+  <div class="modal-overlay" id="modal-budget">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-budget-title">Thêm Ngân sách gói thầu</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-budget">
+          <input type="hidden" id="form-budget-id">
+          <div class="form-group">
+            <label for="form-budget-code">Mã hạn mức / Mã gói thầu *</label>
+            <input type="text" id="form-budget-code" required placeholder="Ví dụ: NS-XL-01">
+          </div>
+          <div class="form-group">
+            <label for="form-budget-name">Tên Gói thầu / Nội dung phân bổ *</label>
+            <input type="text" id="form-budget-name" required placeholder="Ví dụ: Gói thầu san lấp mặt bằng và hạ tầng giao thông">
+          </div>
+          <div class="form-group">
+            <label for="form-budget-category">Nhóm chi phí TMĐT liên kết *</label>
+            <select id="form-budget-category" required>
+              <option value="gpmb">Chi phí Bồi thường, hỗ trợ, GPMB</option>
+              <option value="construction">Chi phí Xây dựng</option>
+              <option value="equipment">Chi phí Thiết bị</option>
+              <option value="qlda">Chi phí Quản lý dự án</option>
+              <option value="consulting">Chi phí Tư vấn xây dựng</option>
+              <option value="other">Chi phí Khác</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="form-budget-amount">Ngân sách được duyệt (VNĐ) *</label>
+            <input type="text" class="format-number" id="form-budget-amount" min="0" required placeholder="Nhập số tiền ngân sách tối đa">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-budget">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. MODAL CẬP NHẬT TIẾN ĐỘ WBS DÙNG CHUNG -->
+  <div class="modal-overlay" id="modal-wbs-schedule-update">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>Cập nhật Tiến độ WBS</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-wbs-schedule-update">
+          <input type="hidden" id="form-wbs-type">
+          <input type="hidden" id="form-wbs-target-id">
+          
+          <div class="form-group">
+            <label>Mục / Hạng mục công việc đang chọn</label>
+            <p id="form-wbs-task-name" style="background: rgba(255,255,255,0.02); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border-glass); font-weight: 600; color: var(--color-info);">-</p>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-wbs-plan-start">Bắt đầu theo Kế hoạch *</label>
+              <input type="date" id="form-wbs-plan-start" required>
+            </div>
+            <div class="form-group">
+              <label for="form-wbs-plan-end">Kết thúc theo Kế hoạch *</label>
+              <input type="date" id="form-wbs-plan-end" required>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-wbs-actual-start">Bắt đầu Thực tế</label>
+              <input type="date" id="form-wbs-actual-start">
+            </div>
+            <div class="form-group">
+              <label for="form-wbs-actual-end">Kết thúc Thực tế</label>
+              <input type="date" id="form-wbs-actual-end">
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-wbs-progress">Tỷ lệ hoàn thành (%)</label>
+              <input type="text" class="format-number" id="form-wbs-progress" min="0" max="100" value="0">
+            </div>
+            <div class="form-group">
+              <label for="form-wbs-status">Trạng thái tiến độ</label>
+              <select id="form-wbs-status">
+                <option value="pending">Chưa bắt đầu (Pending)</option>
+                <option value="on-track">Đúng tiến độ (On Track)</option>
+                <option value="delayed">Trễ tiến độ (Delayed)</option>
+                <option value="completed">Đã hoàn thành (Completed)</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-wbs-schedule">Lưu cập nhật</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. MODAL ĐẤU THẦU (BID) -->
+  <div class="modal-overlay" id="modal-bid">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-bid-title">Thêm Kế hoạch lựa chọn nhà thầu</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-bid">
+          <input type="hidden" id="form-bid-id">
+          <div class="form-group">
+            <label for="form-bid-budget">Liên kết hạn mức Ngân sách gói thầu *</label>
+            <select id="form-bid-budget" required>
+              <!-- Render động các hạn mức ngân sách gói thầu -->
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-bid-code-suffix">Mã gói thầu *</label>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="text" id="form-bid-code-prefix" readonly style="opacity: 0.7; background: rgba(255, 255, 255, 0.05); width: 120px; text-align: center; cursor: not-allowed;" placeholder="Mã NS">
+                <span style="font-weight: bold; font-size: 16px; color: var(--text-muted);">-</span>
+                <input type="text" id="form-bid-code-suffix" placeholder="Để trống nếu trùng ngân sách, hoặc gõ 01, 02 để chia nhỏ..." style="flex-grow: 1;">
+              </div>
+              <input type="hidden" id="form-bid-code">
+            </div>
+            <div class="form-group">
+              <label for="form-bid-name">Tên Gói thầu đấu thầu *</label>
+              <input type="text" id="form-bid-name" required placeholder="Tên gói thầu tương tự ngân sách">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-bid-estimate">Giá gói thầu dự toán (đầu vào - VNĐ) *</label>
+              <input type="text" class="format-number" id="form-bid-estimate" min="0" required placeholder="Giá trần xét thầu">
+            </div>
+            <div class="form-group">
+              <label for="form-bid-amount">Giá trúng thầu thực tế (VNĐ)</label>
+              <input type="text" class="format-number" id="form-bid-amount" min="0" placeholder="Chỉ nhập khi đã có kết quả thầu">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-bid-winner">Đơn vị trúng thầu</label>
+              <input type="text" id="form-bid-winner" placeholder="Tên nhà thầu trúng tuyển">
+            </div>
+            <div class="form-group">
+              <label for="form-bid-handler">Cán bộ thực hiện *</label>
+              <select id="form-bid-handler" required></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="form-bid-status">Trạng thái đấu thầu</label>
+            <select id="form-bid-status">
+              <option value="planned">Lập kế hoạch (Planned)</option>
+              <option value="bidding">Đang tổ chức đấu thầu (Bidding)</option>
+              <option value="evaluated">Đang đánh giá hồ sơ (Evaluated)</option>
+              <option value="awarded">Đã phê duyệt kết quả thầu (Awarded)</option>
+              <option value="cancelled">Hủy thầu (Cancelled)</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-bid">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. MODAL HỢP ĐỒNG (CONTRACT) -->
+  <div class="modal-overlay" id="modal-contract">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-contract-title">Đăng ký Hợp đồng mới</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-contract">
+          <input type="hidden" id="form-contract-id">
+          <div class="form-group">
+            <label for="form-contract-bid">Liên kết với kết quả đấu thầu *</label>
+            <select id="form-contract-bid" required>
+              <!-- Render động các gói thầu trạng thái Awarded -->
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-contract-code">Số hợp đồng *</label>
+              <input type="text" id="form-contract-code" required placeholder="Ví dụ: HĐ-01/2025/GV-DELTA">
+            </div>
+            <div class="form-group">
+              <label for="form-contract-name">Tên hợp đồng *</label>
+              <input type="text" id="form-contract-name" required placeholder="Tên hợp đồng chính thức">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="form-contract-partner">Đối tác / Nhà thầu chính *</label>
+            <input type="text" id="form-contract-partner" required placeholder="Đơn vị thực hiện hợp đồng">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-contract-value">Giá trị hợp đồng (VNĐ) *</label>
+              <input type="text" class="format-number" id="form-contract-value" min="0" required placeholder="Giá trị ký kết gốc">
+            </div>
+            <div class="form-group">
+              <label for="form-contract-type">Hình thức hợp đồng</label>
+              <select id="form-contract-type">
+                <option value="lump-sum">Trọn gói (Lump-sum)</option>
+                <option value="fixed-unit-price">Đơn giá cố định (Fixed Unit Price)</option>
+                <option value="adjustable-unit-price">Đơn giá điều chỉnh (Adjustable Unit Price)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-contract-signing-entity">Pháp nhân ký hợp đồng *</label>
+              <input type="text" id="form-contract-signing-entity" required placeholder="Ví dụ: Công ty CP Đầu tư Green Valley">
+            </div>
+            <div class="form-group">
+              <label for="form-contract-completion-date">Ngày hoàn thành thi công (theo HĐ) *</label>
+              <div class="date-input-group">
+                <input type="date" id="form-contract-completion-date" required>
+                <button type="button" class="btn-today" data-target="form-contract-completion-date">Hôm nay</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-contract-signed">Ngày ký hợp đồng</label>
+              <div class="date-input-group">
+                <input type="date" id="form-contract-signed">
+                <button type="button" class="btn-today" data-target="form-contract-signed">Hôm nay</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="form-contract-status">Trạng thái hợp đồng</label>
+              <select id="form-contract-status">
+                <option value="draft">Đang soạn thảo (Draft)</option>
+                <option value="active">Đang thực hiện (Active)</option>
+                <option value="liquidated">Đã quyết toán thanh lý (Liquidated)</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-contract">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. MODAL THANH TOÁN (PAYMENT) -->
+  <div class="modal-overlay" id="modal-payment">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-payment-title">Lập Đề nghị / Đợt Thanh toán</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-payment">
+          <input type="hidden" id="form-payment-id">
+          <input type="hidden" id="form-payment-contract-id">
+          
+          <p style="font-weight: bold; color: var(--color-primary); margin-bottom: 10px; font-size: 13px; border-bottom: 1px solid var(--border-glass); padding-bottom: 4px;">I. THÔNG TIN HỒ SƠ & TIẾN ĐỘ XỬ LÝ</p>
+          <div class="form-group">
+            <label for="form-payment-period">Nội dung đợt thanh toán *</label>
+            <input type="text" id="form-payment-period" required placeholder="Ví dụ: Đợt 2 (Thanh toán giai đoạn đổ bê tông sàn tầng 5)">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-payment-type">Tính chất thanh toán *</label>
+              <select id="form-payment-type" required>
+                <option value="advance">Tạm ứng hợp đồng</option>
+                <option value="payment">Thanh toán theo khối lượng thực tế</option>
+                <option value="settlement">Quyết toán thanh lý hợp đồng</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="form-payment-status">Trạng thái xử lý *</label>
+              <select id="form-payment-status" required>
+                <option value="pending">Chờ phê duyệt hồ sơ (Pending)</option>
+                <option value="approved">Đã phê duyệt / Đang chi (Approved)</option>
+                <option value="paid">Đã giải ngân tiền thực tế (Paid)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-payment-receive-date">Ngày nhận hồ sơ *</label>
+              <div class="date-input-group">
+                <input type="date" id="form-payment-receive-date" required>
+                <button type="button" class="btn-today" data-target="form-payment-receive-date">Hôm nay</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="form-payment-complete-date">Ngày hoàn thành xử lý</label>
+              <div class="date-input-group">
+                <input type="date" id="form-payment-complete-date">
+                <button type="button" class="btn-today" data-target="form-payment-complete-date">Hôm nay</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-payment-accounting-transfer-date">Ngày chuyển sang Kế toán</label>
+              <div class="date-input-group">
+                <input type="date" id="form-payment-accounting-transfer-date">
+                <button type="button" class="btn-today" data-target="form-payment-accounting-transfer-date">Hôm nay</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="form-payment-handler">Cán bộ thực hiện *</label>
+              <select id="form-payment-handler" required></select>
+            </div>
+          </div>
+
+          <p style="font-weight: bold; color: var(--color-primary); margin-top: 15px; margin-bottom: 10px; font-size: 13px; border-bottom: 1px solid var(--border-glass); padding-bottom: 4px;">II. KHỐI LƯỢNG & ĐỀ NGHỊ THANH TOÁN</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-payment-completed-amount">Giá trị hoàn thành nghiệm thu (VNĐ)</label>
+              <input type="text" class="format-number" id="form-payment-completed-amount" min="0" placeholder="Giá trị khối lượng thực tế hoàn thành kỳ này">
+            </div>
+            <div class="form-group">
+              <label for="form-payment-request">Giá trị đề nghị thanh toán (VNĐ) *</label>
+              <input type="text" class="format-number" id="form-payment-request" min="0" required placeholder="Số tiền theo hồ sơ đề nghị thanh toán">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-payment-date">Ngày chi tiền thực tế</label>
+              <div class="date-input-group">
+                <input type="date" id="form-payment-date">
+                <button type="button" class="btn-today" data-target="form-payment-date">Hôm nay</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="form-payment-paid" style="color: var(--color-success); font-weight: bold;">Giá trị giải ngân thực tế (VNĐ)</label>
+              <input type="text" class="format-number" id="form-payment-paid" readonly style="opacity: 0.8; background: rgba(16, 185, 129, 0.05); color: var(--color-success); font-weight: bold; cursor: not-allowed;" placeholder="Hệ thống tự động tính toán">
+            </div>
+          </div>
+
+          <p style="font-weight: bold; color: var(--color-primary); margin-top: 15px; margin-bottom: 10px; font-size: 13px; border-bottom: 1px solid var(--border-glass); padding-bottom: 4px;">III. CÁC KHOẢN KHẤU TRỪ & BẢO HÀNH (VNĐ)</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-payment-deduction-advance">Khấu trừ Tạm ứng (TƯHĐ/TTGĐ)</label>
+              <input type="text" class="format-number" id="form-payment-deduction-advance" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label for="form-payment-deduction-material">Khấu trừ Thanh toán vật tư</label>
+              <input type="text" class="format-number" id="form-payment-deduction-material" min="0" value="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-payment-deduction-electricity">Khấu trừ tiền Điện thi công</label>
+              <input type="text" class="format-number" id="form-payment-deduction-electricity" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label for="form-payment-deduction-water">Khấu trừ tiền Nước thi công</label>
+              <input type="text" class="format-number" id="form-payment-deduction-water" min="0" value="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-payment-deduction-penalty">Giá trị Phạt vi phạm</label>
+              <input type="text" class="format-number" id="form-payment-deduction-penalty" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label for="form-payment-deduction-cross">Khấu trừ chéo</label>
+              <input type="text" class="format-number" id="form-payment-deduction-cross" min="0" value="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-payment-deduction-other">Khấu trừ khác</label>
+              <input type="text" class="format-number" id="form-payment-deduction-other" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label for="form-payment-retention">Giữ lại bảo hành (bảo lãnh)</label>
+              <input type="text" class="format-number" id="form-payment-retention" min="0" value="0">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-payment">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 9. MODAL RỦI RO (RISK) -->
+  <div class="modal-overlay" id="modal-risk">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-risk-title">Khai báo Rủi ro Chi phí mới</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-risk">
+          <input type="hidden" id="form-risk-id">
+          <div class="form-group">
+            <label for="form-risk-description">Mô tả chi tiết Rủi ro / Sự cố tiềm ẩn *</label>
+            <textarea id="form-risk-description" rows="3" required placeholder="Mô tả sự việc có thể làm tăng chi phí dự án..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-risk-probability">Khả năng xảy ra *</label>
+              <select id="form-risk-probability" required>
+                <option value="low">Thấp (Low)</option>
+                <option value="medium">Trung bình (Medium)</option>
+                <option value="high">Cao (High)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="form-risk-impact">Mức độ ảnh hưởng chi phí *</label>
+              <select id="form-risk-impact" required>
+                <option value="low">Ít ảnh hưởng (Low)</option>
+                <option value="medium">Bình thường (Medium)</option>
+                <option value="high">Rất lớn (High)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="form-risk-cost">Dự phòng tài chính cần chuẩn bị (VNĐ) *</label>
+            <input type="text" class="format-number" id="form-risk-cost" min="0" required placeholder="Mức tăng chi phí giả định">
+          </div>
+          <div class="form-group">
+            <label for="form-risk-mitigation">Biện pháp ứng phó / giảm thiểu rủi ro *</label>
+            <textarea id="form-risk-mitigation" rows="2" required placeholder="Phương án hành động để tránh rủi ro chi phí này..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="form-risk-status">Trạng thái theo dõi</label>
+            <select id="form-risk-status">
+              <option value="active">Rủi ro đang hiện hữu (Active)</option>
+              <option value="monitoring">Đang giám sát chặt chẽ (Monitoring)</option>
+              <option value="mitigated">Đã giảm nhẹ an toàn (Mitigated)</option>
+              <option value="closed">Đã đóng rủi ro / Không xảy ra (Closed)</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-risk">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. MODAL PHÁT SINH (VARIATION) -->
+  <div class="modal-overlay" id="modal-variation">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-variation-title">Đăng ký Phát sinh Chi phí</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-variation">
+          <input type="hidden" id="form-variation-id">
+          <div class="form-group">
+            <label for="form-variation-contract">Thuộc Hợp đồng liên kết *</label>
+            <select id="form-variation-contract" required>
+              <!-- Render động các hợp đồng của dự án -->
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-variation-code">Mã gói thầu/Mã hợp đồng *</label>
+              <input type="text" id="form-variation-code" readonly placeholder="Tự động lấy theo HĐ...">
+            </div>
+            <div class="form-group">
+              <label for="form-variation-name">Nội dung phát sinh *</label>
+              <input type="text" id="form-variation-name" required placeholder="Nội dung hạng mục phát sinh">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-variation-request-amount">Giá trị đề xuất (VNĐ) *</label>
+              <input type="text" class="format-number" id="form-variation-request-amount" min="0" required placeholder="Giá trị đề xuất từ nhà thầu">
+            </div>
+            <div class="form-group">
+              <label for="form-variation-approved-amount">Giá trị phê duyệt duyệt (VNĐ)</label>
+              <input type="text" class="format-number" id="form-variation-approved-amount" min="0" placeholder="Giá trị CĐT phê duyệt cuối cùng">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-variation-receive-date">Ngày nhận hồ sơ *</label>
+              <div class="date-input-group">
+                <input type="date" id="form-variation-receive-date" required>
+                <button type="button" class="btn-today" data-target="form-variation-receive-date">Hôm nay</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="form-variation-complete-date">Ngày hoàn thành duyệt giá</label>
+              <div class="date-input-group">
+                <input type="date" id="form-variation-complete-date">
+                <button type="button" class="btn-today" data-target="form-variation-complete-date">Hôm nay</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-variation-handler">Cán bộ thực hiện *</label>
+              <select id="form-variation-handler" required></select>
+            </div>
+            <div class="form-group">
+              <label for="form-variation-status">Trạng thái phát sinh *</label>
+              <select id="form-variation-status" required>
+                <option value="pending">Chờ phê duyệt giá trị (Pending)</option>
+                <option value="approved">Đã phê duyệt giá trị (Approved)</option>
+                <option value="rejected">Từ chối phát sinh (Rejected)</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-variation">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. MODAL PHỤ LỤC HỢP ĐỒNG (ADDENDUM) -->
+  <div class="modal-overlay" id="modal-addendum">
+    <div class="modal-container" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 id="modal-addendum-title">Lập Phụ lục Hợp đồng (PLHĐ)</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-addendum">
+          <input type="hidden" id="form-addendum-id">
+          <div class="form-group">
+            <label for="form-addendum-contract">Lập cho Hợp đồng chính *</label>
+            <select id="form-addendum-contract" required>
+              <!-- Render động các hợp đồng của dự án -->
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-addendum-code">Số Phụ lục hợp đồng *</label>
+              <input type="text" id="form-addendum-code" required placeholder="Ví dụ: PLHĐ-01/HĐ-DELTA">
+            </div>
+            <div class="form-group">
+              <label for="form-addendum-name">Tên Phụ lục hợp đồng *</label>
+              <input type="text" id="form-addendum-name" required placeholder="Tên phụ lục điều chỉnh chính thức">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-addendum-signed-date">Ngày ký phụ lục</label>
+              <div class="date-input-group">
+                <input type="date" id="form-addendum-signed-date">
+                <button type="button" class="btn-today" data-target="form-addendum-signed-date">Hôm nay</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="form-addendum-status">Trạng thái PLHĐ *</label>
+              <select id="form-addendum-status" required>
+                <option value="draft">Đang soạn thảo (Draft)</option>
+                <option value="active">Hiệu lực đang thực hiện (Active)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- PHẦN GOM CÁC PHÁT SINH ĐÃ DUYỆT -->
+          <div class="form-group" style="margin-top: 15px;">
+            <label style="font-weight: bold; color: var(--color-primary);">Tích chọn các phát sinh gom vào PLHĐ này:</label>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">(Chỉ hiển thị các phát sinh đã duyệt và chưa gom vào phụ lục nào)</p>
+            <div id="addendum-variations-list" style="max-height: 180px; overflow-y: auto; background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 6px; padding: 10px;">
+              <!-- Render checkbox động các phát sinh từ JS -->
+              <p style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 10px 0;">Không có phát sinh đã duyệt nào cần gom.</p>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 15px;">
+            <label for="form-addendum-value" style="font-weight: bold; color: var(--color-success);">Tổng giá trị Phụ lục hợp đồng (VNĐ)</label>
+            <input type="text" class="format-number" id="form-addendum-value" readonly style="opacity: 0.8; background: rgba(16, 185, 129, 0.05); color: var(--color-success); font-weight: bold; cursor: not-allowed;" placeholder="0">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-addendum">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 12. MODAL CÁN BỘ (OFFICER) -->
+  <div class="modal-overlay" id="modal-officer">
+    <div class="modal-container" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3 id="modal-officer-title">Thêm cán bộ mới</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-officer">
+          <input type="hidden" id="form-officer-id">
+          <div class="form-group">
+            <label for="form-officer-name">Họ và tên *</label>
+            <input type="text" id="form-officer-name" required placeholder="Ví dụ: Nguyễn Văn A">
+          </div>
+          <div class="form-group">
+            <label for="form-officer-position">Chức vụ *</label>
+            <input type="text" id="form-officer-position" required placeholder="Ví dụ: Cán bộ Kỹ thuật">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-officer">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <!-- 13. MODAL VẬT TƯ CĐT CẤP (MATERIAL) -->
+  <div class="modal-overlay" id="modal-material">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 id="modal-material-title">Đăng ký Vật tư CĐT cấp</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-material">
+          <input type="hidden" id="form-material-id">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-material-supplier">Nhà cung cấp *</label>
+              <input type="text" id="form-material-supplier" required placeholder="Ví dụ: Công ty Thép Hòa Phát">
+            </div>
+            <div class="form-group">
+                <label for="form-material-contract">Hợp đồng cung cấp</label>
+              <select id="form-material-contract">
+                <!-- Render động -->
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+              <label for="form-material-name">Tên vật tư *</label>
+              <input type="text" id="form-material-name" required placeholder="Ví dụ: Thép cuộn D10">
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label for="form-material-unit">Đơn vị *</label>
+              <input type="text" id="form-material-unit" required placeholder="Tấn, Bộ, m2...">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-material-contract-qty">Số lượng theo HĐ *</label>
+              <input type="text" class="format-number" id="form-material-contract-qty" required min="0" step="any" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label for="form-material-import-qty">Số lượng nhập *</label>
+              <input type="text" class="format-number" id="form-material-import-qty" required min="0" step="any" placeholder="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-material-import-date">Ngày nhập</label>
+              <div class="date-input-group">
+                <input type="date" id="form-material-import-date">
+                <button type="button" class="btn btn-secondary btn-today" data-target="form-material-import-date">Hôm nay</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="form-material-receipt-no">Số Phiếu / Biên bản</label>
+              <input type="text" id="form-material-receipt-no" placeholder="Ví dụ: PN/2025/01">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-material-delivered-qty">Số lượng giao cho nhà thầu</label>
+              <input type="text" class="format-number" id="form-material-delivered-qty" min="0" step="any" value="0">
+            </div>
+            <div class="form-group">
+              <label for="form-material-delivery-date">Ngày giao</label>
+              <div class="date-input-group">
+                <input type="date" id="form-material-delivery-date">
+                <button type="button" class="btn btn-secondary btn-today" data-target="form-material-delivery-date">Hôm nay</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-material-contractor-name">Nhà thầu nhận</label>
+              <input type="text" id="form-material-contractor-name" placeholder="Ví dụ: Công ty Xây dựng Delta">
+            </div>
+            <div class="form-group">
+              <label for="form-material-returned-qty">Nhà thầu trả (nếu có)</label>
+              <input type="text" class="format-number" id="form-material-returned-qty" min="0" step="any" value="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="form-material-attachment-file">Đính kèm biên bản giao hàng (Dưới 500KB)</label>
+            <input type="file" id="form-material-attachment-file" accept="image/*,application/pdf" style="margin-bottom: 8px;">
+            <input type="hidden" id="form-material-attachment-data">
+            <input type="text" id="form-material-attachment-name" placeholder="Chưa có file đính kèm" readonly style="opacity: 0.8; background: var(--bg-input);">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-material">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14. MODAL KHẤU TRỪ HỖ TRỢ (SUPPORT DEDUCTION) -->
+  <div class="modal-overlay" id="modal-support-deduction">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 id="modal-support-deduction-title">Đăng ký Khấu trừ Hỗ trợ</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-support-deduction">
+          <input type="hidden" id="form-support-deduction-id">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-support-deduction-deduct-contractor">Nhà thầu bị khấu trừ (A) *</label>
+              <input type="text" id="form-support-deduction-deduct-contractor" required placeholder="Đơn vị chịu chi phí">
+            </div>
+            <div class="form-group">
+              <label for="form-support-deduction-pay-contractor">Nhà thầu thụ hưởng (B) *</label>
+              <input type="text" id="form-support-deduction-pay-contractor" required placeholder="Đơn vị làm thay/nhận tiền">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-support-deduction-deduct-contract">HĐ bị khấu trừ (A)</label>
+              <select id="form-support-deduction-deduct-contract">
+                <!-- Render động -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="form-support-deduction-pay-contract">HĐ thanh toán (B)</label>
+              <select id="form-support-deduction-pay-contract">
+                <!-- Render động -->
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-support-deduction-category">Hạng mục khấu trừ *</label>
+              <input type="text" id="form-support-deduction-category" required placeholder="Ví dụ: Vệ sinh công nghiệp, sửa lỗi móng...">
+            </div>
+            <div class="form-group">
+              <label for="form-support-deduction-status">Tình trạng khấu trừ</label>
+              <select id="form-support-deduction-status">
+                <option value="pending">Chưa khấu trừ</option>
+                <option value="processing">Đang khấu trừ</option>
+                <option value="completed">Đã khấu trừ hoàn tất</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-support-deduction-amt-before">Giá trị trước thuế *</label>
+              <input type="text" class="format-number" id="form-support-deduction-amt-before" required min="0" placeholder="VND">
+            </div>
+            <div class="form-group">
+              <label for="form-support-deduction-amt-after">Giá trị sau thuế *</label>
+              <input type="text" class="format-number" id="form-support-deduction-amt-after" required min="0" placeholder="VND">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-support-deduction-period">Khấu trừ tại đợt thanh toán</label>
+              <input type="text" id="form-support-deduction-period" placeholder="Ví dụ: Đợt 3, Đợt 4...">
+            </div>
+            <div class="form-group">
+              <label for="form-support-deduction-settlement">Khấu trừ khi Quyết toán</label>
+              <input type="text" id="form-support-deduction-settlement" placeholder="Ví dụ: Giảm trừ trực tiếp quyết toán">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="form-support-deduction-content">Nội dung chi tiết khấu trừ *</label>
+            <textarea id="form-support-deduction-content" rows="2" required placeholder="Mô tả lý do, căn cứ khấu trừ..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="form-support-deduction-attachment-file">Đính kèm biên bản/công văn (Dưới 500KB)</label>
+            <input type="file" id="form-support-deduction-attachment-file" accept="image/*,application/pdf" style="margin-bottom: 8px;">
+            <input type="hidden" id="form-support-deduction-attachment-data">
+            <input type="text" id="form-support-deduction-attachment-name" placeholder="Chưa có file đính kèm" readonly style="opacity: 0.8; background: var(--bg-input);">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-support-deduction">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 15. MODAL KHẤU TRỪ PHẠT VI PHẠM (PENALTY DEDUCTION) -->
+  <div class="modal-overlay" id="modal-penalty-deduction">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 id="modal-penalty-deduction-title">Đăng ký Phạt vi phạm</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-penalty-deduction">
+          <input type="hidden" id="form-penalty-deduction-id">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-penalty-deduction-doc-no">Số văn bản (CV) *</label>
+              <input type="text" id="form-penalty-deduction-doc-no" required placeholder="Ví dụ: 125/CV-CĐT">
+            </div>
+            <div class="form-group">
+              <label for="form-penalty-deduction-doc-date">Ngày văn bản *</label>
+              <div class="date-input-group">
+                <input type="date" id="form-penalty-deduction-doc-date" required>
+                <button type="button" class="btn btn-secondary btn-today" data-target="form-penalty-deduction-doc-date">Hôm nay</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="form-penalty-deduction-doc-content">Nội dung văn bản (Căn cứ phạt) *</label>
+            <input type="text" id="form-penalty-deduction-doc-content" required placeholder="Cảnh cáo chậm tiến độ lần 2, vi phạm an toàn lao động...">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-penalty-deduction-name">Tên khoản phạt *</label>
+              <input type="text" id="form-penalty-deduction-name" required placeholder="Phạt tiến độ, Phạt ATLĐ, Phạt chất lượng...">
+            </div>
+            <div class="form-group">
+              <label for="form-penalty-deduction-contract">Hợp đồng áp dụng phạt *</label>
+              <select id="form-penalty-deduction-contract" required>
+                <!-- Render động -->
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-penalty-deduction-amount">Giá trị phạt (VND) *</label>
+              <input type="text" class="format-number" id="form-penalty-deduction-amount" required min="0" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label for="form-penalty-deduction-status">Tình trạng</label>
+              <select id="form-penalty-deduction-status">
+                <option value="pending">Chưa khấu trừ</option>
+                <option value="processing">Đang khấu trừ</option>
+                <option value="completed">Đã khấu trừ</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-penalty-deduction-payment-period">Khấu trừ tại HSTT đợt</label>
+              <input type="text" id="form-penalty-deduction-payment-period" placeholder="Ví dụ: Đợt 5">
+            </div>
+            <div class="form-group">
+              <label for="form-penalty-deduction-settlement-period">Khấu trừ tại HSQT</label>
+              <input type="text" id="form-penalty-deduction-settlement-period" placeholder="Ví dụ: Khi quyết toán">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="form-penalty-deduction-attachment-file">Đính kèm biên bản/công văn (Dưới 500KB)</label>
+            <input type="file" id="form-penalty-deduction-attachment-file" accept="image/*,application/pdf" style="margin-bottom: 8px;">
+            <input type="hidden" id="form-penalty-deduction-attachment-data">
+            <input type="text" id="form-penalty-deduction-attachment-name" placeholder="Chưa có file đính kèm" readonly style="opacity: 0.8; background: var(--bg-input);">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel-btn">Hủy bỏ</button>
+        <button class="btn btn-primary" id="btn-save-penalty-deduction">Lưu dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="db.js?v=2.0.0"></script>
+  <script src="app.js?v=2.0.0"></script>
+</body>
+</html>
