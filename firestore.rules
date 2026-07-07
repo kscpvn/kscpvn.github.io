@@ -1,10 +1,20 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Chỉ cho phép đọc/ghi document dữ liệu dùng chung của ban, có hạn dùng
-    // (sau ngày này cần bật Authentication và siết luật — xem HUONG_DAN_TRIEN_KHAI.md)
+    // Kho dữ liệu dùng chung của ban: chỉ người ĐÃ ĐĂNG NHẬP và có email trong danh sách
+    // được cấp quyền mới đọc/ghi được. Muốn thêm/bớt người dùng: sửa danh sách này
+    // VÀ danh sách ALLOWED_EMAILS trong cloud-sync.js cho khớp.
+    function isAllowed() {
+      return request.auth != null && request.auth.token.email in [
+        'vuongnb@klbgroup.vn',
+        'mydh@klbgroup.vn',
+        'tuannn@klbgroup.vn',
+        'diendp@klbgroup.vn',
+        'bacbc@klbgroup.vn'
+      ];
+    }
     match /kscp/{docId} {
-      allow read, write: if request.time < timestamp.date(2026, 8, 15);
+      allow read, write: if isAllowed();
     }
   }
 }
