@@ -1,20 +1,42 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Kho dữ liệu dùng chung của ban: chỉ người ĐÃ ĐĂNG NHẬP và có email trong danh sách
-    // được cấp quyền mới đọc/ghi được. Muốn thêm/bớt người dùng: sửa danh sách này
-    // VÀ danh sách ALLOWED_EMAILS trong cloud-sync.js cho khớp.
-    function isAllowed() {
-      return request.auth != null && request.auth.token.email in [
-        'vuongnb@klbgroup.vn',
-        'mydh@klbgroup.vn',
-        'tuannn@klbgroup.vn',
-        'diendp@klbgroup.vn',
-        'bacbc@klbgroup.vn'
-      ];
+
+    // Roster thành viên (email + vai trò) — dùng để phân quyền phía máy chủ.
+    // Nếu chưa có doc _members thì dùng danh sách khởi tạo mặc định bên dưới.
+    function roster() {
+      return exists(/databases/$(database)/documents/kscp/_members)
+        ? get(/databases/$(database)/documents/kscp/_members).data
+        : {
+            adminEmails: ['vuongnb@klbgroup.vn'],
+            memberEmails: ['mydh@klbgroup.vn', 'tuannn@klbgroup.vn', 'diendp@klbgroup.vn', 'bacbc@klbgroup.vn']
+          };
     }
+    function userEmail() {
+      return request.auth != null ? request.auth.token.email : '';
+    }
+    // Admin gốc luôn có quyền (để khởi tạo/khôi phục roster khi cần)
+    function isAdmin() {
+      return request.auth != null &&
+        (userEmail() == 'vuongnb@klbgroup.vn' || userEmail() in roster().get('adminEmails', []));
+    }
+    function isEditor() {
+      return request.auth != null &&
+        (isAdmin() || userEmail() in roster().get('memberEmails', []));
+    }
+
+    // Doc roster: ai cũng ĐỌC được (client cần biết vai trò để hiện đúng nút),
+    // chỉ Admin được GHI (duyệt/thêm/bớt thành viên).
+    match /kscp/_members {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Dữ liệu dùng chung: AI CÓ LINK CŨNG ĐỌC ĐƯỢC (view-only),
+    // chỉ Thành viên/Admin đã đăng nhập mới GHI.
     match /kscp/{docId} {
-      allow read, write: if isAllowed();
+      allow read: if true;
+      allow write: if docId != '_members' && isEditor();
     }
   }
 }

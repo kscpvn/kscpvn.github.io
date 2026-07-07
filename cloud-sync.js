@@ -1,16 +1,13 @@
 /**
- * cloud-sync.js — Đăng nhập bảo mật + đồng bộ dữ liệu dùng chung real-time qua Firebase.
+ * cloud-sync.js — Phân quyền 3 cấp + đồng bộ dữ liệu dùng chung real-time (Firebase).
  *
- * BẢO MẬT:
- *  - Người dùng phải ĐĂNG NHẬP bằng tài khoản Google và email phải nằm trong ALLOWED_EMAILS.
- *  - Luật Firestore (firestore.rules) chặn phía máy chủ: chỉ các email này mới đọc/ghi được,
- *    nên kể cả ai có link cũng không lấy được dữ liệu.
+ * MÔ HÌNH QUYỀN:
+ *  - Khách (không đăng nhập / ai có link): CHỈ XEM. Mọi nút thêm/sửa/xóa bị ẩn.
+ *  - Thành viên (đăng nhập, email trong roster): xem + thêm/sửa/xóa các mục nghiệp vụ.
+ *  - Admin: toàn quyền (dự án, dữ liệu mẫu, sao lưu/phục hồi, cán bộ, thương hiệu, DUYỆT THÀNH VIÊN...).
  *
- * ĐỒNG BỘ:
- *  - localStorage là kho làm việc chính (chạy được cả khi mất mạng).
- *  - Mỗi thay đổi -> đẩy toàn bộ lên 1 document chung trên Firestore; người khác đổi -> tự kéo về.
- *
- * Muốn thêm/bớt người dùng: sửa danh sách ALLOWED_EMAILS bên dưới VÀ trong firestore.rules cho khớp.
+ * BẢO MẬT: firestore.rules chặn phía máy chủ — ai có link chỉ ĐỌC được; chỉ tài khoản
+ * trong roster mới GHI. Vai trò lấy từ doc "kscp/_members" (Admin tự quản lý trong app).
  */
 
 const CLOUD_CONFIG = {
@@ -22,239 +19,355 @@ const CLOUD_CONFIG = {
     messagingSenderId: "547491599584",
     appId: "1:547491599584:web:2a9db8022fc8588525ec85"
   },
-  // Định danh kho dữ liệu dùng chung của ban (mọi người phải giống nhau)
   docId: "kscp-ban-chung"
 };
 
-// Danh sách email được phép sử dụng phần mềm (phải trùng với firestore.rules)
-const ALLOWED_EMAILS = [
-  "vuongnb@klbgroup.vn",   // Admin - Trưởng ban QLCP
-  "mydh@klbgroup.vn",
-  "tuannn@klbgroup.vn",
-  "diendp@klbgroup.vn",
-  "bacbc@klbgroup.vn"
+// Admin gốc (không xóa được) + roster khởi tạo khi doc _members chưa tồn tại
+const BOOTSTRAP_ADMIN = "vuongnb@klbgroup.vn";
+const INITIAL_ADMINS = ["vuongnb@klbgroup.vn"];
+const INITIAL_MEMBERS = ["mydh@klbgroup.vn", "tuannn@klbgroup.vn", "diendp@klbgroup.vn", "bacbc@klbgroup.vn"];
+
+// Nút chỉ Thành viên + Admin thấy (ẩn với Khách)
+const EDIT_SELECTORS = [
+  "#btn-add-budget", "#btn-add-bid", "#btn-add-contract", "#btn-add-addendum", "#btn-add-variation",
+  "#btn-add-payment", "#btn-add-material", "#btn-add-support-deduction", "#btn-add-penalty-deduction",
+  "#btn-add-risk", "#btn-ai-analyze-risks",
+  "#btn-template-materials", "#btn-import-materials", "#btn-template-support-deductions",
+  "#btn-import-support-deductions", "#btn-template-penalty-deductions", "#btn-import-penalty-deductions",
+  ".edit-budget-btn", ".delete-budget-btn", ".edit-bid-btn", ".delete-bid-btn", ".edit-ctr-btn",
+  ".delete-ctr-btn", ".edit-addendum-btn", ".delete-addendum-btn", ".edit-var-btn", ".delete-var-btn",
+  ".edit-pay-btn", ".delete-pay-btn", ".edit-risk-btn", ".delete-risk-btn", ".edit-wbs-btn",
+  ".edit-material-btn", ".delete-material-btn", ".edit-sd-btn", ".delete-sd-btn", ".edit-pd-btn", ".delete-pd-btn"
+];
+// Nút CHỈ Admin thấy
+const ADMIN_SELECTORS = [
+  "#btn-add-new-project", "#btn-reset-mock", "#btn-backup-json", "#btn-restore-json",
+  "#btn-edit-current-project", "#btn-delete-current-project", "#btn-edit-tmdt-categories",
+  "#btn-save-sla", "#btn-save-branding", "#btn-add-officer", "#btn-save-api-key", "#btn-edit-api-config",
+  ".edit-proj-btn", ".edit-officer-btn", ".delete-officer-btn"
 ];
 
 (function initCloudSync() {
   if (!CLOUD_CONFIG.firebase.apiKey) {
-    console.log("[CloudSync] Chưa cấu hình đám mây — chạy chế độ lưu cục bộ (localStorage).");
+    console.log("[CloudSync] Chưa cấu hình đám mây — chạy chế độ lưu cục bộ.");
     return;
   }
   if (typeof firebase === "undefined" || !firebase.firestore || !firebase.auth) {
-    console.error("[CloudSync] Chưa nạp đủ thư viện Firebase (app/auth/firestore). Kiểm tra các thẻ <script> trong index.html.");
+    console.error("[CloudSync] Chưa nạp đủ thư viện Firebase (app/auth/firestore).");
     return;
   }
 
-  let auth, docRef;
+  let auth, dataRef, membersRef;
   try {
     firebase.initializeApp(CLOUD_CONFIG.firebase);
     auth = firebase.auth();
-    docRef = firebase.firestore().collection("kscp").doc(CLOUD_CONFIG.docId);
+    const fs = firebase.firestore();
+    dataRef = fs.collection("kscp").doc(CLOUD_CONFIG.docId);
+    membersRef = fs.collection("kscp").doc("_members");
   } catch (e) {
     console.error("[CloudSync] Lỗi khởi tạo Firebase:", e);
     return;
   }
 
-  const overlay = buildLoginOverlay();
+  injectPermCss();
+
+  let roster = { adminEmails: INITIAL_ADMINS.slice(), memberEmails: INITIAL_MEMBERS.slice() };
+  let currentUser = null;
+  let currentRole = "guest"; // guest | none | member | admin
+  const origSave = window.db.saveData.bind(window.db);
+  let applyingRemote = false;
+  let pushTimer = null;
   let syncStarted = false;
 
-  // Theo dõi trạng thái đăng nhập
-  auth.onAuthStateChanged((user) => {
-    if (!user) {
-      showLoginScreen();
-      return;
-    }
-    const email = (user.email || "").toLowerCase();
-    if (!ALLOWED_EMAILS.map((e) => e.toLowerCase()).includes(email)) {
-      showDeniedScreen(email);
-      auth.signOut();
-      return;
-    }
-    // Đã đăng nhập và có quyền
-    hideOverlay();
-    if (!syncStarted) {
-      syncStarted = true;
-      startSync(user);
-    }
-  });
+  // ---- GHI DỮ LIỆU: luôn ghi localStorage; chỉ đẩy lên mây nếu có quyền sửa ----
+  window.db.saveData = function (data) {
+    origSave(data);
+    if (applyingRemote) return;
+    if (currentRole !== "member" && currentRole !== "admin") return; // Khách: không đẩy lên mây
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(() => {
+      dataRef.set({ payload: JSON.stringify(data), updatedAt: Date.now(), updatedBy: currentUser ? currentUser.email : "" })
+        .catch((e) => { console.error("[CloudSync] Lỗi đẩy dữ liệu:", e); showStatus("Lỗi đồng bộ lên mây.", "#ef4444"); });
+    }, 800);
+  };
 
-  // ---- ĐĂNG NHẬP GOOGLE ----
-  function doGoogleLogin() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
-    setOverlayMessage("Đang mở cửa sổ đăng nhập Google…", "");
-    auth.signInWithPopup(provider).catch((err) => {
-      console.error("[CloudSync] Lỗi đăng nhập:", err);
-      if (err && (err.code === "auth/popup-blocked" || err.code === "auth/cancelled-popup-request" || err.code === "auth/operation-not-supported-in-this-environment")) {
-        auth.signInWithRedirect(provider);
-      } else {
-        showLoginScreen("Đăng nhập chưa thành công. Vui lòng thử lại.");
-      }
-    });
-  }
-
-  // ---- ĐỒNG BỘ (chỉ chạy sau khi đăng nhập hợp lệ) ----
-  function startSync(user) {
-    const banner = showStatus("Đã đăng nhập: " + user.email + " — đang kết nối dữ liệu…", "#f59e0b");
-    const origSave = window.db.saveData.bind(window.db);
-    let applyingRemote = false;
-    let pushTimer = null;
-
-    // Chặn saveData: ghi localStorage như cũ, rồi đẩy lên mây (gộp trong 800ms)
-    window.db.saveData = function (data) {
-      origSave(data);
-      if (applyingRemote) return;
-      clearTimeout(pushTimer);
-      pushTimer = setTimeout(() => {
-        docRef.set({ payload: JSON.stringify(data), updatedAt: Date.now(), updatedBy: user.email })
-          .catch((e) => {
-            console.error("[CloudSync] Lỗi đẩy dữ liệu lên mây:", e);
-            showStatus("Lỗi đồng bộ lên mây — dữ liệu vẫn được lưu cục bộ.", "#ef4444");
-          });
-      }, 800);
-    };
-
-    // Lắng nghe thay đổi real-time từ người dùng khác
-    docRef.onSnapshot(
+  // ---- ĐỌC DỮ LIỆU real-time: chạy cho MỌI người (kể cả khách) ----
+  function startDataSync() {
+    if (syncStarted) return;
+    syncStarted = true;
+    const banner = showStatus("Đang tải dữ liệu dùng chung…", "#f59e0b");
+    dataRef.onSnapshot(
       (snap) => {
         if (!snap.exists) {
-          docRef.set({ payload: JSON.stringify(window.db.getData()), updatedAt: Date.now(), updatedBy: user.email });
-          setStatus(banner, "Đã tạo kho dữ liệu dùng chung.", "#22c55e", true);
+          if (currentRole === "member" || currentRole === "admin") {
+            dataRef.set({ payload: JSON.stringify(window.db.getData()), updatedAt: Date.now(), updatedBy: currentUser.email });
+          }
+          setStatus(banner, "Kho dữ liệu dùng chung sẵn sàng.", "#22c55e", true);
           return;
         }
         if (snap.metadata.hasPendingWrites) return;
         try {
           const remote = snap.data();
-          const data = JSON.parse(remote.payload);
           applyingRemote = true;
-          origSave(data);
+          origSave(JSON.parse(remote.payload));
           applyingRemote = false;
           refreshUI();
           const when = remote.updatedAt ? new Date(remote.updatedAt).toLocaleTimeString("vi-VN") : "";
           const who = remote.updatedBy ? " bởi " + remote.updatedBy : "";
-          setStatus(banner, "Đã đồng bộ" + (when ? " lúc " + when : "") + who, "#22c55e", true);
+          setStatus(banner, "Đã cập nhật" + (when ? " lúc " + when : "") + who, "#22c55e", true);
         } catch (e) {
           applyingRemote = false;
-          console.error("[CloudSync] Lỗi đọc dữ liệu từ mây:", e);
+          console.error("[CloudSync] Lỗi đọc dữ liệu:", e);
         }
       },
-      (err) => {
-        console.error("[CloudSync] Mất kết nối tới Firestore:", err);
-        showStatus("Mất kết nối dữ liệu dùng chung — đang dùng bản cục bộ.", "#ef4444");
-      }
+      (err) => { console.error("[CloudSync] Lỗi Firestore:", err); showStatus("Không tải được dữ liệu dùng chung.", "#ef4444"); }
     );
-
-    // Gắn nút Đăng xuất vào thanh trên cùng
-    addLogoutButton(user);
   }
+
+  // ---- ROSTER (danh sách thành viên + vai trò) ----
+  membersRef.onSnapshot((snap) => {
+    if (snap.exists) {
+      const d = snap.data();
+      roster = {
+        adminEmails: (d.adminEmails || []).slice(),
+        memberEmails: (d.memberEmails || []).slice()
+      };
+    } else {
+      roster = { adminEmails: INITIAL_ADMINS.slice(), memberEmails: INITIAL_MEMBERS.slice() };
+    }
+    recomputeRole();
+  }, (e) => console.error("[CloudSync] Lỗi đọc roster:", e));
+
+  function roleOf(email) {
+    if (!email) return "guest";
+    email = email.toLowerCase();
+    const admins = roster.adminEmails.map((x) => x.toLowerCase());
+    const members = roster.memberEmails.map((x) => x.toLowerCase());
+    if (email === BOOTSTRAP_ADMIN.toLowerCase() || admins.includes(email)) return "admin";
+    if (members.includes(email)) return "member";
+    return "none";
+  }
+
+  function recomputeRole() {
+    currentRole = currentUser ? roleOf(currentUser.email) : "guest";
+    applyPermissions(currentRole);
+    updateHeaderUI();
+  }
+
+  // ---- ĐĂNG NHẬP ----
+  auth.onAuthStateChanged((user) => {
+    currentUser = user || null;
+    recomputeRole();
+    // Nếu là Admin và roster chưa tồn tại trên mây -> khởi tạo
+    if (user && roleOf(user.email) === "admin") {
+      membersRef.get().then((s) => {
+        if (!s.exists) membersRef.set({ adminEmails: INITIAL_ADMINS, memberEmails: INITIAL_MEMBERS, updatedAt: Date.now(), updatedBy: user.email }).catch(() => {});
+      });
+    }
+  });
+
+  function doGoogleLogin() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    auth.signInWithPopup(provider).catch((err) => {
+      console.error("[CloudSync] Lỗi đăng nhập:", err);
+      if (err && (err.code === "auth/popup-blocked" || err.code === "auth/cancelled-popup-request")) auth.signInWithRedirect(provider);
+      else alert("Đăng nhập chưa thành công: " + (err && err.message ? err.message : err));
+    });
+  }
+  function doLogout() {
+    if (confirm("Đăng xuất khỏi tài khoản " + (currentUser ? currentUser.email : "") + "?")) auth.signOut().then(() => location.reload());
+  }
+
+  // ---- PHÂN QUYỀN GIAO DIỆN ----
+  function applyPermissions(role) {
+    const canEdit = role === "member" || role === "admin";
+    const isAdmin = role === "admin";
+    setHidden(EDIT_SELECTORS, !canEdit);
+    setHidden(ADMIN_SELECTORS, !isAdmin);
+  }
+  function setHidden(selectors, hide) {
+    selectors.forEach((sel) => {
+      document.querySelectorAll(sel).forEach((el) => {
+        if (hide) el.setAttribute("data-perm-hide", "1");
+        else el.removeAttribute("data-perm-hide");
+      });
+    });
+  }
+  function injectPermCss() {
+    const s = document.createElement("style");
+    s.textContent = "[data-perm-hide]{display:none !important;}";
+    document.head.appendChild(s);
+  }
+  // Bảng vẽ lại liên tục -> theo dõi DOM để áp lại quyền
+  let permTimer = null;
+  const observer = new MutationObserver(() => {
+    clearTimeout(permTimer);
+    permTimer = setTimeout(() => applyPermissions(currentRole), 60);
+  });
+  if (document.body) observer.observe(document.body, { childList: true, subtree: true });
 
   function refreshUI() {
     try {
       if (typeof populateProjectSelector === "function") populateProjectSelector();
       const sel = document.getElementById("global-project-select");
       if (sel && window.state) {
-        const stillExists =
-          window.state.currentProjectId === "all" ||
-          (window.db.getProjectById && window.db.getProjectById(window.state.currentProjectId));
-        if (!stillExists) window.state.currentProjectId = "all";
+        const ok = window.state.currentProjectId === "all" || (window.db.getProjectById && window.db.getProjectById(window.state.currentProjectId));
+        if (!ok) window.state.currentProjectId = "all";
         sel.value = window.state.currentProjectId;
       }
       if (typeof renderActiveTab === "function") renderActiveTab();
-    } catch (e) {
-      console.error("[CloudSync] Lỗi làm mới giao diện:", e);
-    }
+      applyPermissions(currentRole);
+    } catch (e) { console.error("[CloudSync] Lỗi làm mới UI:", e); }
   }
 
-  function addLogoutButton(user) {
-    if (document.getElementById("btn-cloud-logout")) return;
-    const header = document.querySelector(".header-actions") || document.body;
-    const btn = document.createElement("button");
-    btn.id = "btn-cloud-logout";
-    btn.className = "btn btn-secondary";
-    btn.title = "Đăng xuất khỏi " + user.email;
-    btn.innerHTML = '<i data-lucide="log-out"></i>Đăng xuất';
-    btn.addEventListener("click", () => {
-      if (confirm("Đăng xuất khỏi tài khoản " + user.email + "?")) auth.signOut().then(() => location.reload());
-    });
-    header.appendChild(btn);
+  // ---- THANH TRẠNG THÁI TÀI KHOẢN (góc phải trên) ----
+  function updateHeaderUI() {
+    const header = document.querySelector(".header-actions");
+    if (!header) return;
+    let box = document.getElementById("cloud-auth-box");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "cloud-auth-box";
+      box.style.cssText = "display:flex;align-items:center;gap:8px;margin-left:12px;";
+      header.appendChild(box);
+    }
+    if (!currentUser) {
+      box.innerHTML = "";
+      const b = mkBtn("btn-cloud-login", "btn btn-primary", '<i data-lucide="log-in"></i>Đăng nhập');
+      b.addEventListener("click", doGoogleLogin);
+      box.appendChild(b);
+    } else {
+      const roleLabel = currentRole === "admin" ? "Admin" : currentRole === "member" ? "Thành viên" : "Chưa được cấp quyền";
+      const roleColor = currentRole === "admin" ? "#f59e0b" : currentRole === "member" ? "#22c55e" : "#ef4444";
+      box.innerHTML =
+        '<span style="font-size:12px;color:var(--text-muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+        currentUser.email + ' · <b style="color:' + roleColor + '">' + roleLabel + "</b></span>";
+      if (currentRole === "admin") {
+        const m = mkBtn("btn-manage-members", "btn btn-secondary", '<i data-lucide="users-round"></i>Thành viên');
+        m.addEventListener("click", openMembersModal);
+        box.appendChild(m);
+      }
+      const out = mkBtn("btn-cloud-logout", "btn btn-secondary", '<i data-lucide="log-out"></i>Đăng xuất');
+      out.addEventListener("click", doLogout);
+      box.appendChild(out);
+    }
     if (window.lucide) window.lucide.createIcons();
   }
-
-  // ---- GIAO DIỆN MÀN HÌNH ĐĂNG NHẬP ----
-  function buildLoginOverlay() {
-    let el = document.getElementById("login-overlay");
-    if (el) return el;
-    el = document.createElement("div");
-    el.id = "login-overlay";
-    el.style.cssText =
-      "position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;" +
-      "background:linear-gradient(135deg,#0f172a,#1e293b);font-family:system-ui,'Segoe UI',sans-serif;";
-    el.innerHTML =
-      '<div style="text-align:center;color:#e2e8f0;max-width:420px;padding:40px 32px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);">' +
-      '<div style="font-size:34px;font-weight:800;letter-spacing:1px;color:#818cf8;margin-bottom:6px;">KSCP</div>' +
-      '<div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">Hệ thống Kiểm soát Chi phí Dự án</div>' +
-      '<div id="login-message" style="font-size:14px;color:#cbd5e1;margin-bottom:20px;min-height:20px;">Vui lòng đăng nhập bằng tài khoản được cấp quyền.</div>' +
-      '<button id="btn-google-login" style="display:inline-flex;align-items:center;gap:10px;background:#fff;color:#1f2937;border:none;padding:12px 22px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);">' +
-      '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.8-6.8C35.6 2.4 30.1 0 24 0 14.6 0 6.4 5.4 2.6 13.2l7.9 6.1C12.3 13.2 17.6 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.9 7.2l7.6 5.9c4.4-4.1 7.1-10.1 7.1-17.6z"/><path fill="#FBBC05" d="M10.5 28.3c-.5-1.4-.8-3-.8-4.8s.3-3.4.8-4.8l-7.9-6.1C1 15.9 0 19.8 0 24s1 8.1 2.6 11.4l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.1 0 11.3-2 15-5.5l-7.6-5.9c-2.1 1.4-4.8 2.3-7.4 2.3-6.4 0-11.7-3.7-13.5-9.8l-7.9 6.1C6.4 42.6 14.6 48 24 48z"/></svg>' +
-      'Đăng nhập với Google</button>' +
-      '<div style="font-size:12px;color:#64748b;margin-top:22px;">Chỉ các tài khoản trong ban được cấp quyền mới truy cập được.<br>Liên hệ Admin (Trưởng ban QLCP) nếu cần thêm quyền.</div>' +
-      "</div>";
-    (document.body || document.documentElement).appendChild(el);
-    el.querySelector("#btn-google-login").addEventListener("click", doGoogleLogin);
-    return el;
+  function mkBtn(id, cls, html) {
+    const b = document.createElement("button");
+    b.id = id; b.className = cls; b.innerHTML = html;
+    return b;
   }
 
-  function showLoginScreen(msg) {
-    overlay.style.display = "flex";
-    const btn = overlay.querySelector("#btn-google-login");
-    if (btn) btn.style.display = "inline-flex";
-    setOverlayMessage(msg || "Vui lòng đăng nhập bằng tài khoản được cấp quyền.", msg ? "#f87171" : "");
-  }
-
-  function showDeniedScreen(email) {
-    overlay.style.display = "flex";
-    setOverlayMessage(
-      'Tài khoản <b>' + (email || "này") + "</b> không có quyền sử dụng phần mềm.<br>Vui lòng đăng nhập bằng email đã được Admin cấp quyền.",
-      "#f87171"
-    );
-    const btn = overlay.querySelector("#btn-google-login");
-    if (btn) btn.style.display = "inline-flex";
-  }
-
-  function setOverlayMessage(html, color) {
-    const m = overlay.querySelector("#login-message");
-    if (m) {
-      m.innerHTML = html;
-      m.style.color = color || "#cbd5e1";
+  // ---- MÀN HÌNH QUẢN LÝ THÀNH VIÊN (Admin) ----
+  function openMembersModal() {
+    let modal = document.getElementById("members-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "members-modal";
+      modal.style.cssText = "position:fixed;inset:0;z-index:100001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);";
+      modal.innerHTML =
+        '<div style="background:#1e293b;color:#e2e8f0;width:520px;max-width:94vw;max-height:88vh;overflow:auto;border-radius:14px;border:1px solid rgba(255,255,255,.1);padding:24px;font-family:system-ui,sans-serif;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><h2 style="margin:0;font-size:19px;color:#818cf8;">Quản lý thành viên</h2>' +
+        '<button id="members-close" style="background:none;border:none;color:#94a3b8;font-size:24px;cursor:pointer;line-height:1;">&times;</button></div>' +
+        '<p style="font-size:12.5px;color:#94a3b8;margin:0 0 16px;">Admin có toàn quyền. Thành viên được thêm/sửa/xóa dữ liệu nghiệp vụ. Khách (không đăng nhập) chỉ xem.</p>' +
+        '<div id="members-list" style="margin-bottom:18px;"></div>' +
+        '<div style="border-top:1px solid rgba(255,255,255,.1);padding-top:16px;">' +
+        '<div style="font-weight:600;margin-bottom:8px;font-size:14px;">Thêm thành viên mới</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+        '<input id="member-email" type="email" placeholder="email@klbgroup.vn" style="flex:1;min-width:200px;padding:9px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:#0f172a;color:#e2e8f0;font-size:14px;">' +
+        '<select id="member-role" style="padding:9px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:#0f172a;color:#e2e8f0;font-size:14px;"><option value="member">Thành viên</option><option value="admin">Admin</option></select>' +
+        '<button id="member-add" class="btn btn-primary">Thêm</button></div>' +
+        '<div id="member-msg" style="font-size:12.5px;color:#f87171;margin-top:8px;min-height:16px;"></div></div>' +
+        "</div>";
+      document.body.appendChild(modal);
+      modal.querySelector("#members-close").addEventListener("click", () => (modal.style.display = "none"));
+      modal.querySelector("#member-add").addEventListener("click", addMember);
     }
+    modal.style.display = "flex";
+    renderMembersList();
   }
 
-  function hideOverlay() {
-    overlay.style.display = "none";
+  function renderMembersList() {
+    const list = document.getElementById("members-list");
+    if (!list) return;
+    const rows = [];
+    roster.adminEmails.forEach((e) => rows.push(memberRow(e, "admin")));
+    roster.memberEmails.forEach((e) => rows.push(memberRow(e, "member")));
+    list.innerHTML =
+      '<div style="font-size:12px;color:#64748b;margin-bottom:6px;">Đang có ' + (roster.adminEmails.length + roster.memberEmails.length) + " người</div>" + rows.join("");
+    list.querySelectorAll("[data-remove]").forEach((b) =>
+      b.addEventListener("click", () => removeMember(b.getAttribute("data-remove")))
+    );
+  }
+  function memberRow(email, role) {
+    const isBoot = email.toLowerCase() === BOOTSTRAP_ADMIN.toLowerCase();
+    const badge = role === "admin" ? '<span style="color:#f59e0b;font-weight:600;">Admin</span>' : '<span style="color:#22c55e;">Thành viên</span>';
+    const rm = isBoot
+      ? '<span style="font-size:11px;color:#64748b;">Admin gốc</span>'
+      : '<button data-remove="' + email + '" style="background:none;border:1px solid rgba(239,68,68,.4);color:#f87171;border-radius:6px;padding:3px 9px;font-size:12px;cursor:pointer;">Xóa</button>';
+    return (
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.03);margin-bottom:6px;">' +
+      '<span style="font-size:13.5px;">' + email + " &nbsp; " + badge + "</span>" + rm + "</div>"
+    );
   }
 
-  // ---- DẢI THÔNG BÁO TRẠNG THÁI ----
+  function addMember() {
+    const emailEl = document.getElementById("member-email");
+    const roleEl = document.getElementById("member-role");
+    const msg = document.getElementById("member-msg");
+    const email = (emailEl.value || "").trim().toLowerCase();
+    msg.style.color = "#f87171";
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "Email không hợp lệ."; return; }
+    const all = roster.adminEmails.concat(roster.memberEmails).map((x) => x.toLowerCase());
+    if (all.includes(email)) { msg.textContent = "Email này đã có trong danh sách."; return; }
+    const next = { adminEmails: roster.adminEmails.slice(), memberEmails: roster.memberEmails.slice() };
+    if (roleEl.value === "admin") next.adminEmails.push(email);
+    else next.memberEmails.push(email);
+    saveRoster(next, msg, () => { emailEl.value = ""; });
+  }
+  function removeMember(email) {
+    const low = email.toLowerCase();
+    if (low === BOOTSTRAP_ADMIN.toLowerCase()) return;
+    const next = {
+      adminEmails: roster.adminEmails.filter((e) => e.toLowerCase() !== low),
+      memberEmails: roster.memberEmails.filter((e) => e.toLowerCase() !== low)
+    };
+    saveRoster(next, document.getElementById("member-msg"));
+  }
+  function saveRoster(next, msg, onOk) {
+    membersRef.set({ adminEmails: next.adminEmails, memberEmails: next.memberEmails, updatedAt: Date.now(), updatedBy: currentUser ? currentUser.email : "" })
+      .then(() => {
+        roster = next;
+        recomputeRole();
+        renderMembersList();
+        if (msg) { msg.style.color = "#22c55e"; msg.textContent = "Đã lưu."; }
+        if (onOk) onOk();
+      })
+      .catch((e) => { if (msg) { msg.style.color = "#f87171"; msg.textContent = "Lỗi lưu: " + e.message; } });
+  }
+
+  // ---- THANH TRẠNG THÁI ĐỒNG BỘ (góc phải dưới) ----
   function showStatus(text, color) {
     let el = document.getElementById("cloud-sync-status");
     if (!el) {
       el = document.createElement("div");
       el.id = "cloud-sync-status";
-      el.style.cssText =
-        "position:fixed;right:16px;bottom:16px;z-index:9999;padding:8px 14px;border-radius:8px;" +
-        "font-size:13px;font-weight:600;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.3);" +
-        "font-family:system-ui,sans-serif;transition:opacity .4s;opacity:1;max-width:360px;";
+      el.style.cssText = "position:fixed;right:16px;bottom:16px;z-index:9999;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.3);font-family:system-ui,sans-serif;transition:opacity .4s;max-width:360px;";
       document.body.appendChild(el);
     }
-    el.textContent = text;
-    el.style.background = color;
-    el.style.opacity = "1";
+    el.textContent = text; el.style.background = color; el.style.opacity = "1";
     return el;
   }
   function setStatus(el, text, color, autoHide) {
     if (!el) return;
-    el.textContent = text;
-    el.style.background = color;
-    el.style.opacity = "1";
+    el.textContent = text; el.style.background = color; el.style.opacity = "1";
     if (autoHide) setTimeout(() => (el.style.opacity = "0"), 3000);
   }
+
+  // Bắt đầu: đọc dữ liệu cho mọi người, dựng thanh tài khoản, áp quyền khách
+  startDataSync();
+  updateHeaderUI();
+  applyPermissions("guest");
 })();
