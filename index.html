@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=2.3.2">
+  <link rel="stylesheet" href="style.css?v=2.4.0">
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Chart.js CDN -->
@@ -1860,10 +1860,11 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="form-material-attachment-file">Đính kèm biên bản giao hàng (Dưới 500KB)</label>
+            <label for="form-material-attachment-file">Đính kèm biên bản giao hàng (file nhỏ &lt;500KB, hoặc dán link Drive cho file lớn)</label>
             <input type="file" id="form-material-attachment-file" accept="image/*,application/pdf" style="margin-bottom: 8px;">
             <input type="hidden" id="form-material-attachment-data">
             <input type="text" id="form-material-attachment-name" placeholder="Chưa có file đính kèm" readonly style="opacity: 0.8; background: var(--bg-input);">
+            <input type="url" id="form-material-attachment-link" placeholder="🔗 Dán link Google Drive (khuyên dùng cho file lớn)" style="margin-top: 8px;">
           </div>
         </form>
       </div>
@@ -1947,10 +1948,11 @@
             <textarea id="form-support-deduction-content" rows="2" required placeholder="Mô tả lý do, căn cứ khấu trừ..."></textarea>
           </div>
           <div class="form-group">
-            <label for="form-support-deduction-attachment-file">Đính kèm biên bản/công văn (Dưới 500KB)</label>
+            <label for="form-support-deduction-attachment-file">Đính kèm biên bản/công văn (file nhỏ &lt;500KB, hoặc dán link Drive cho file lớn)</label>
             <input type="file" id="form-support-deduction-attachment-file" accept="image/*,application/pdf" style="margin-bottom: 8px;">
             <input type="hidden" id="form-support-deduction-attachment-data">
             <input type="text" id="form-support-deduction-attachment-name" placeholder="Chưa có file đính kèm" readonly style="opacity: 0.8; background: var(--bg-input);">
+            <input type="url" id="form-support-deduction-attachment-link" placeholder="🔗 Dán link Google Drive (khuyên dùng cho file lớn)" style="margin-top: 8px;">
           </div>
         </form>
       </div>
@@ -2025,10 +2027,11 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="form-penalty-deduction-attachment-file">Đính kèm biên bản/công văn (Dưới 500KB)</label>
+            <label for="form-penalty-deduction-attachment-file">Đính kèm biên bản/công văn (file nhỏ &lt;500KB, hoặc dán link Drive cho file lớn)</label>
             <input type="file" id="form-penalty-deduction-attachment-file" accept="image/*,application/pdf" style="margin-bottom: 8px;">
             <input type="hidden" id="form-penalty-deduction-attachment-data">
             <input type="text" id="form-penalty-deduction-attachment-name" placeholder="Chưa có file đính kèm" readonly style="opacity: 0.8; background: var(--bg-input);">
+            <input type="url" id="form-penalty-deduction-attachment-link" placeholder="🔗 Dán link Google Drive (khuyên dùng cho file lớn)" style="margin-top: 8px;">
           </div>
         </form>
       </div>
@@ -2040,12 +2043,12 @@
   </div>
 
   <!-- Scripts -->
-  <script src="db.js?v=2.3.2"></script>
-  <script src="app.js?v=2.3.2"></script>
+  <script src="db.js?v=2.4.0"></script>
+  <script src="app.js?v=2.4.0"></script>
   <!-- Đăng nhập bảo mật + đồng bộ dữ liệu dùng chung — Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="cloud-sync.js?v=2.3.2"></script>
+  <script src="cloud-sync.js?v=2.4.0"></script>
 </body>
 </html>

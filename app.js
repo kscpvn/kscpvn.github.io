@@ -6020,7 +6020,7 @@ function renderMaterialsTab() {
       <td>${m.contractorName || ''}</td>
       <td style="text-align: right;">${formatCurrency(m.returnedQty || 0)}</td>
       <td style="text-align: right; font-weight: bold; color: ${stock < 0 ? 'var(--color-danger)' : 'var(--color-success)'};">${formatCurrency(stock)}</td>
-            <td>${m.attachmentName ? `<a href="#" style="color: var(--color-primary);"><i data-lucide="paperclip" style="width:14px;height:14px;margin-right:4px;"></i>File</a>` : ''}</td>
+            <td>${m.attachmentLink ? `<a href="${esc(m.attachmentLink)}" target="_blank" rel="noopener" style="color: var(--color-primary);"><i data-lucide="link" style="width:14px;height:14px;margin-right:4px;"></i>Link</a>` : (m.attachmentName ? `<a href="${m.attachmentData || '#'}" download="${esc(m.attachmentName)}" style="color: var(--color-primary);"><i data-lucide="paperclip" style="width:14px;height:14px;margin-right:4px;"></i>File</a>` : '')}</td>
       <td>
         <button class="btn btn-secondary btn-sm btn-icon-only edit-material-btn" data-id="${m.id}"><i data-lucide="edit-2"></i></button>
         <button class="btn btn-danger btn-sm btn-icon-only delete-material-btn" data-id="${m.id}"><i data-lucide="trash-2"></i></button>
@@ -6087,11 +6087,13 @@ function openMaterialModal(mat = null) {
     document.getElementById('form-material-returned-qty').value = formatVNNumber(mat.returnedQty || 0);
         document.getElementById('form-material-attachment-name').value = mat.attachmentName || '';
     document.getElementById('form-material-attachment-data').value = mat.attachmentData || '';
+    document.getElementById('form-material-attachment-link').value = mat.attachmentLink || '';
   } else {
     title.textContent = 'Đăng ký Vật tư CĐT cấp';
     idInput.value = '';
     document.getElementById('form-material-attachment-name').value = '';
     document.getElementById('form-material-attachment-data').value = '';
+    document.getElementById('form-material-attachment-link').value = '';
   }
   
   openModal('modal-material');
@@ -6114,7 +6116,8 @@ function submitMaterialForm() {
     contractorName: document.getElementById('form-material-contractor-name').value.trim(),
     returnedQty: parseVNNumber(document.getElementById('form-material-returned-qty').value),
     attachmentName: document.getElementById('form-material-attachment-name').value,
-    attachmentData: document.getElementById('form-material-attachment-data').value
+    attachmentData: document.getElementById('form-material-attachment-data').value,
+    attachmentLink: document.getElementById('form-material-attachment-link').value.trim()
   };
   
   
@@ -6189,7 +6192,7 @@ function renderSupportDeductionsTab() {
       <td>${esc(d.period || '')}</td>
       <td>${d.settlement || ''}</td>
       <td>${statusMap[d.status] || d.status || ''}</td>
-      <td>${d.attachmentName ? `<a href="#" style="color: var(--color-primary);"><i data-lucide="paperclip" style="width:14px;height:14px;margin-right:4px;"></i>File</a>` : ''}</td>
+      <td>${d.attachmentLink ? `<a href="${esc(d.attachmentLink)}" target="_blank" rel="noopener" style="color: var(--color-primary);"><i data-lucide="link" style="width:14px;height:14px;margin-right:4px;"></i>Link</a>` : (d.attachmentName ? `<a href="${d.attachmentData || '#'}" download="${esc(d.attachmentName)}" style="color: var(--color-primary);"><i data-lucide="paperclip" style="width:14px;height:14px;margin-right:4px;"></i>File</a>` : '')}</td>
       <td>
         <button class="btn btn-secondary btn-sm btn-icon-only edit-sd-btn" data-id="${d.id}"><i data-lucide="edit-2"></i></button>
         <button class="btn btn-danger btn-sm btn-icon-only delete-sd-btn" data-id="${d.id}"><i data-lucide="trash-2"></i></button>
@@ -6259,11 +6262,13 @@ function openSupportDeductionModal(d = null) {
     document.getElementById('form-support-deduction-content').value = d.content || '';
     document.getElementById('form-support-deduction-attachment-name').value = d.attachmentName || '';
     document.getElementById('form-support-deduction-attachment-data').value = d.attachmentData || '';
+    document.getElementById('form-support-deduction-attachment-link').value = d.attachmentLink || '';
   } else {
     title.textContent = 'Đăng ký Khấu trừ Hỗ trợ';
     idInput.value = '';
     document.getElementById('form-support-deduction-attachment-name').value = '';
     document.getElementById('form-support-deduction-attachment-data').value = '';
+    document.getElementById('form-support-deduction-attachment-link').value = '';
   }
   
   openModal('modal-support-deduction');
@@ -6285,7 +6290,8 @@ function submitSupportDeductionForm() {
     settlement: document.getElementById('form-support-deduction-settlement').value.trim(),
     content: document.getElementById('form-support-deduction-content').value.trim(),
     attachmentName: document.getElementById('form-support-deduction-attachment-name').value,
-    attachmentData: document.getElementById('form-support-deduction-attachment-data').value
+    attachmentData: document.getElementById('form-support-deduction-attachment-data').value,
+    attachmentLink: document.getElementById('form-support-deduction-attachment-link').value.trim()
   };
   
   
@@ -6355,7 +6361,7 @@ function renderPenaltyDeductionsTab() {
       <td>${d.paymentPeriod || ''}</td>
       <td>${d.settlementPeriod || ''}</td>
       <td>${statusMap[d.status] || d.status || ''}</td>
-      <td>${d.attachmentName ? `<a href="#" style="color: var(--color-primary);"><i data-lucide="paperclip" style="width:14px;height:14px;margin-right:4px;"></i>File</a>` : ''}</td>
+      <td>${d.attachmentLink ? `<a href="${esc(d.attachmentLink)}" target="_blank" rel="noopener" style="color: var(--color-primary);"><i data-lucide="link" style="width:14px;height:14px;margin-right:4px;"></i>Link</a>` : (d.attachmentName ? `<a href="${d.attachmentData || '#'}" download="${esc(d.attachmentName)}" style="color: var(--color-primary);"><i data-lucide="paperclip" style="width:14px;height:14px;margin-right:4px;"></i>File</a>` : '')}</td>
       <td>
         <button class="btn btn-secondary btn-sm btn-icon-only edit-pd-btn" data-id="${d.id}"><i data-lucide="edit-2"></i></button>
         <button class="btn btn-danger btn-sm btn-icon-only delete-pd-btn" data-id="${d.id}"><i data-lucide="trash-2"></i></button>
@@ -6427,6 +6433,7 @@ function openPenaltyDeductionModal(d = null) {
       document.getElementById('form-penalty-deduction-attachment-name').value = d.attachmentName || '';
     }
     document.getElementById('form-penalty-deduction-attachment-data').value = d.attachmentData || '';
+    document.getElementById('form-penalty-deduction-attachment-link').value = d.attachmentLink || '';
   } else {
     title.textContent = 'Đăng ký Phạt vi phạm';
     idInput.value = '';
@@ -6437,8 +6444,9 @@ function openPenaltyDeductionModal(d = null) {
       document.getElementById('form-penalty-deduction-attachment-name').value = '';
     }
     document.getElementById('form-penalty-deduction-attachment-data').value = '';
+    document.getElementById('form-penalty-deduction-attachment-link').value = '';
   }
-  
+
   openModal('modal-penalty-deduction');
 }
 
@@ -6457,7 +6465,8 @@ function submitPenaltyDeductionForm() {
     paymentPeriod: document.getElementById('form-penalty-deduction-payment-period').value.trim(),
     settlementPeriod: document.getElementById('form-penalty-deduction-settlement-period').value.trim(),
     attachmentName: attachNameEl ? attachNameEl.value : '',
-    attachmentData: document.getElementById('form-penalty-deduction-attachment-data').value
+    attachmentData: document.getElementById('form-penalty-deduction-attachment-data').value,
+    attachmentLink: document.getElementById('form-penalty-deduction-attachment-link').value.trim()
   };
   
   
