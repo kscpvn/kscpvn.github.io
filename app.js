@@ -302,7 +302,7 @@ function applyBranding() {
 
   // Sidebar logo text
   const sidebarText = document.getElementById('sidebar-logo-text');
-  if (sidebarText) sidebarText.textContent = companyName || 'AntiGravity PM';
+  if (sidebarText) sidebarText.textContent = companyName || 'KSCP';
 
   // Sidebar logo image
   const sidebarImg = document.getElementById('sidebar-company-logo');
@@ -317,7 +317,7 @@ function applyBranding() {
 
   // Header brand name
   const headerName = document.getElementById('display-company-name');
-  if (headerName) headerName.textContent = companyName || '';
+  if (headerName) headerName.textContent = companyName || 'KSCP';
 
   // Header brand logo
   const headerLogo = document.getElementById('display-company-logo');
