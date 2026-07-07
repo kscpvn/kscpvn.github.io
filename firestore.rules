@@ -8,17 +8,18 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/kscp/_members)
         ? get(/databases/$(database)/documents/kscp/_members).data
         : {
-            adminEmails: ['vuongnb@klbgroup.vn'],
+            adminEmails: ['vuongnb@klbgroup.vn', 'minhvuongktxd@gmail.com'],
             memberEmails: ['mydh@klbgroup.vn', 'tuannn@klbgroup.vn', 'diendp@klbgroup.vn', 'bacbc@klbgroup.vn']
           };
     }
     function userEmail() {
       return request.auth != null ? request.auth.token.email : '';
     }
-    // Admin gốc luôn có quyền (để khởi tạo/khôi phục roster khi cần)
+    // Admin gốc luôn có quyền (dự phòng, để khởi tạo/khôi phục roster khi cần)
     function isAdmin() {
       return request.auth != null &&
-        (userEmail() == 'vuongnb@klbgroup.vn' || userEmail() in roster().get('adminEmails', []));
+        (userEmail() == 'vuongnb@klbgroup.vn' || userEmail() == 'minhvuongktxd@gmail.com'
+          || userEmail() in roster().get('adminEmails', []));
     }
     function isEditor() {
       return request.auth != null &&

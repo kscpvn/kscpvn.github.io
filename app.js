@@ -1463,7 +1463,7 @@ function renderAllProjectsDashboard() {
       plugins: {
         legend: {
           position: 'top',
-          labels: { color: '#94a3b8' }
+          labels: { color: '#486581' }
         },
         tooltip: {
           callbacks: {
@@ -1475,9 +1475,9 @@ function renderAllProjectsDashboard() {
       },
       scales: {
         y: {
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          grid: { color: 'rgba(2, 132, 199, 0.10)' },
           ticks: {
-            color: '#94a3b8',
+            color: '#486581',
             callback: function(val) {
               if (val >= 1e9) return (val / 1e9) + ' tỷ';
               if (val >= 1e6) return (val / 1e6) + ' tr';
@@ -1486,7 +1486,7 @@ function renderAllProjectsDashboard() {
           }
         },
         x: {
-          ticks: { color: '#94a3b8' },
+          ticks: { color: '#486581' },
           grid: { display: false }
         }
       }
@@ -1516,7 +1516,7 @@ function renderSingleProjectDashboard() {
 
   if (summary.alerts.length === 0) {
     alertsContainer.innerHTML = `
-      <div class="alert-box" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.2); color: #a7f3d0;">
+      <div class="alert-box" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.2); color: #047857;">
         <i data-lucide="check-circle" style="color: var(--color-success)"></i>
         <span>An toàn: Hệ thống không phát hiện rủi ro vượt ngân sách hay chênh lệch đấu thầu nào cho dự án hiện tại.</span>
       </div>
@@ -1595,9 +1595,9 @@ function renderSingleProjectDashboard() {
       },
       scales: {
         y: {
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          grid: { color: 'rgba(2, 132, 199, 0.10)' },
           ticks: {
-            color: '#94a3b8',
+            color: '#486581',
             callback: function(v) {
               if (v >= 1e9) return (v / 1e9) + ' tỷ';
               if (v >= 1e6) return (v / 1e6) + ' tr';
@@ -1605,7 +1605,7 @@ function renderSingleProjectDashboard() {
             }
           }
         },
-        x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+        x: { ticks: { color: '#486581' }, grid: { display: false } }
       }
     }
   });
@@ -1639,7 +1639,7 @@ function renderSingleProjectDashboard() {
       plugins: {
         legend: {
           position: 'right',
-          labels: { color: '#94a3b8', font: { size: 10 } }
+          labels: { color: '#486581', font: { size: 10 } }
         },
         tooltip: {
           callbacks: {
@@ -1856,7 +1856,7 @@ function renderTmdtTab() {
       plugins: {
         legend: {
           position: 'right',
-          labels: { color: '#94a3b8', font: { size: 11 } }
+          labels: { color: '#486581', font: { size: 11 } }
         },
         tooltip: {
           callbacks: {

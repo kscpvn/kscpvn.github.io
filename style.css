@@ -1144,3 +1144,90 @@ table.data-table tbody tr:hover {
 .btn-today:hover {
   background: rgba(99, 102, 241, 0.2);
 }
+
+/* ============================================================
+   THEME SÁNG — XANH NHẠT NƯỚC BIỂN (KSCP) — override cuối file
+   ============================================================ */
+:root {
+  --bg-dark: #e9f4fb;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f2f9fe;
+  --bg-input: #f4f9fd;
+  --border-glass: rgba(2, 132, 199, 0.16);
+  --border-glass-focus: rgba(2, 132, 199, 0.5);
+  --text-main: #0e2a44;
+  --text-muted: #486581;
+  --text-dim: #7089a0;
+  --color-primary: #0284c7;
+  --color-primary-glow: rgba(2, 132, 199, 0.15);
+  --color-success: #059669;
+  --color-success-glow: rgba(5, 150, 105, 0.1);
+  --color-warning: #d97706;
+  --color-warning-glow: rgba(217, 119, 6, 0.1);
+  --color-danger: #e11d48;
+  --color-danger-glow: rgba(225, 29, 72, 0.1);
+  --color-info: #0891b2;
+  --color-info-glow: rgba(8, 145, 178, 0.1);
+  --shadow-main: 0 6px 22px rgba(12, 74, 110, 0.10);
+  --shadow-glow: 0 0 14px rgba(2, 132, 199, 0.22);
+}
+
+html { font-size: 15px; }
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.16) 0px, transparent 55%),
+    radial-gradient(at 100% 0%, rgba(2, 132, 199, 0.10) 0px, transparent 52%),
+    radial-gradient(at 50% 100%, rgba(56, 189, 248, 0.12) 0px, transparent 55%);
+}
+
+::-webkit-scrollbar-thumb { background: rgba(2, 132, 199, 0.25); }
+::-webkit-scrollbar-thumb:hover { background: rgba(2, 132, 199, 0.45); }
+
+/* Sidebar sáng */
+aside.sidebar { background: rgba(255, 255, 255, 0.92); border-right: 1px solid var(--border-glass); }
+.sidebar-logo i { color: var(--color-primary); filter: none; }
+.sidebar-logo h1 { background: linear-gradient(135deg, #0ea5e9, #0369a1); -webkit-background-clip: text; background-clip: text; }
+.menu-item a { color: var(--text-muted); }
+.menu-item a:hover { color: var(--text-main); background: rgba(2, 132, 199, 0.08); }
+.menu-item.active a { color: #0369a1; background: linear-gradient(135deg, rgba(2, 132, 199, 0.16), rgba(2, 132, 199, 0.04)); border-left: 3px solid var(--color-primary); box-shadow: none; }
+.menu-item.active i { color: var(--color-primary); }
+.sidebar-footer { color: var(--text-dim); }
+
+/* Header + select */
+.project-select-wrapper select { background: #ffffff; color: var(--text-main); box-shadow: 0 1px 3px rgba(12,74,110,.06); }
+
+/* Card */
+.card { box-shadow: var(--shadow-main); }
+.card:hover { box-shadow: 0 10px 30px rgba(12, 74, 110, 0.14); }
+
+/* Bảng */
+table.data-table th { background-color: #eef7fd; color: #486581; }
+table.data-table tbody tr:hover { background: rgba(2, 132, 199, 0.05); }
+.row-warning { background: rgba(217, 119, 6, 0.06); }
+.row-danger { background: rgba(225, 29, 72, 0.06); }
+
+/* Badge */
+.badge-primary { background: rgba(2, 132, 199, 0.12); color: #0369a1; border: 1px solid rgba(2, 132, 199, 0.3); }
+.badge-success { background: rgba(5, 150, 105, 0.12); color: #047857; border: 1px solid rgba(5, 150, 105, 0.3); }
+.badge-warning { background: rgba(217, 119, 6, 0.14); color: #b45309; border: 1px solid rgba(217, 119, 6, 0.3); }
+.badge-danger { background: rgba(225, 29, 72, 0.12); color: #be123c; border: 1px solid rgba(225, 29, 72, 0.3); }
+.badge-info { background: rgba(8, 145, 178, 0.12); color: #0e7490; border: 1px solid rgba(8, 145, 178, 0.3); }
+
+/* KPI icons */
+.kpi-primary { background: rgba(2, 132, 199, 0.1); border: 1px solid rgba(2, 132, 199, 0.22); }
+.kpi-primary i { color: #0284c7; }
+.kpi-success { background: rgba(5, 150, 105, 0.1); border: 1px solid rgba(5, 150, 105, 0.22); }
+.kpi-success i { color: #059669; }
+
+/* Modal sáng */
+.modal-overlay { background: rgba(12, 40, 66, 0.45); }
+.modal-container { background: #ffffff; box-shadow: 0 24px 50px rgba(12, 74, 110, 0.28); }
+
+/* Nút primary rõ hơn trên nền sáng */
+.btn-secondary { background: #eaf4fb; color: #0369a1; border: 1px solid rgba(2,132,199,.25); }
+.btn-secondary:hover { background: #dcecf8; }
+.modal-footer { background: #f4f9fd; border-top: 1px solid var(--border-glass); }
+.modal-header { border-bottom: 1px solid var(--border-glass); }

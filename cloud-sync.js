@@ -22,10 +22,13 @@ const CLOUD_CONFIG = {
   docId: "kscp-ban-chung"
 };
 
-// Admin gốc (không xóa được) + roster khởi tạo khi doc _members chưa tồn tại
-const BOOTSTRAP_ADMIN = "vuongnb@klbgroup.vn";
-const INITIAL_ADMINS = ["vuongnb@klbgroup.vn"];
+// Admin gốc (KHÔNG XÓA ĐƯỢC, luôn có quyền — dùng làm admin dự phòng) + roster khởi tạo
+const BOOTSTRAP_ADMINS = ["vuongnb@klbgroup.vn", "minhvuongktxd@gmail.com"];
+const INITIAL_ADMINS = ["vuongnb@klbgroup.vn", "minhvuongktxd@gmail.com"];
 const INITIAL_MEMBERS = ["mydh@klbgroup.vn", "tuannn@klbgroup.vn", "diendp@klbgroup.vn", "bacbc@klbgroup.vn"];
+function isBootstrapAdmin(email) {
+  return !!email && BOOTSTRAP_ADMINS.map(function (e) { return e.toLowerCase(); }).includes(email.toLowerCase());
+}
 
 // Nút chỉ Thành viên + Admin thấy (ẩn với Khách)
 const EDIT_SELECTORS = [
@@ -143,7 +146,7 @@ const ADMIN_SELECTORS = [
     email = email.toLowerCase();
     const admins = roster.adminEmails.map((x) => x.toLowerCase());
     const members = roster.memberEmails.map((x) => x.toLowerCase());
-    if (email === BOOTSTRAP_ADMIN.toLowerCase() || admins.includes(email)) return "admin";
+    if (isBootstrapAdmin(email) || admins.includes(email)) return "admin";
     if (members.includes(email)) return "member";
     return "none";
   }
@@ -293,16 +296,19 @@ const ADMIN_SELECTORS = [
     const list = document.getElementById("members-list");
     if (!list) return;
     const rows = [];
-    roster.adminEmails.forEach((e) => rows.push(memberRow(e, "admin")));
-    roster.memberEmails.forEach((e) => rows.push(memberRow(e, "member")));
+    const seen = {};
+    // Admin gốc (dự phòng) luôn hiện đầu tiên
+    BOOTSTRAP_ADMINS.forEach((e) => { const l = e.toLowerCase(); if (!seen[l]) { seen[l] = 1; rows.push(memberRow(e, "admin")); } });
+    roster.adminEmails.forEach((e) => { const l = e.toLowerCase(); if (!seen[l]) { seen[l] = 1; rows.push(memberRow(e, "admin")); } });
+    roster.memberEmails.forEach((e) => { const l = e.toLowerCase(); if (!seen[l]) { seen[l] = 1; rows.push(memberRow(e, "member")); } });
     list.innerHTML =
-      '<div style="font-size:12px;color:#64748b;margin-bottom:6px;">Đang có ' + (roster.adminEmails.length + roster.memberEmails.length) + " người</div>" + rows.join("");
+      '<div style="font-size:12px;color:#64748b;margin-bottom:6px;">Đang có ' + Object.keys(seen).length + " người</div>" + rows.join("");
     list.querySelectorAll("[data-remove]").forEach((b) =>
       b.addEventListener("click", () => removeMember(b.getAttribute("data-remove")))
     );
   }
   function memberRow(email, role) {
-    const isBoot = email.toLowerCase() === BOOTSTRAP_ADMIN.toLowerCase();
+    const isBoot = isBootstrapAdmin(email);
     const badge = role === "admin" ? '<span style="color:#f59e0b;font-weight:600;">Admin</span>' : '<span style="color:#22c55e;">Thành viên</span>';
     const rm = isBoot
       ? '<span style="font-size:11px;color:#64748b;">Admin gốc</span>'
@@ -329,7 +335,7 @@ const ADMIN_SELECTORS = [
   }
   function removeMember(email) {
     const low = email.toLowerCase();
-    if (low === BOOTSTRAP_ADMIN.toLowerCase()) return;
+    if (isBootstrapAdmin(email)) return;
     const next = {
       adminEmails: roster.adminEmails.filter((e) => e.toLowerCase() !== low),
       memberEmails: roster.memberEmails.filter((e) => e.toLowerCase() !== low)
